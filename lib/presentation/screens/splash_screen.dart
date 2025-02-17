@@ -1,4 +1,3 @@
-// lib/presentation/screens/splash/splash_screen.dart
 import 'package:flutter/material.dart';
 import '../../../app/theme/theme.dart';
 import 'onboarding_screen.dart';
@@ -49,7 +48,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   }
 
   Future<void> _checkAuthStatus() async {
-    await Future.delayed(const Duration(seconds: 3));
+    await Future.delayed(const Duration(seconds: 6));
 
     if (!mounted) return;
 
@@ -106,7 +105,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                       animation: _rotationAnimation,
                       builder: (context, child) {
                         return CustomPaint(
-                          size: const Size(150, 150),
+                          size: const Size(160, 160),
                           painter: CircleStrokePainter(
                             progress: _rotationAnimation.value,
                             color: AppTheme.kPrimaryGreen,
@@ -114,7 +113,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                         );
                       },
                     ),
-                    // Centered icon
+                    // Centered logo
                     Container(
                       width: 120,
                       height: 120,
@@ -122,22 +121,22 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                         color: AppTheme.kPrimaryGreen.withOpacity(0.1),
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(
-                        Icons.psychology_outlined,
-                        size: 60,
-                        color: AppTheme.kPrimaryGreen,
+                      child: Image.asset(
+                        'assets/logos/sereni_logo.png',
+                        width: 32,
+                        height: 32,
                       ),
                     ),
                   ],
                 ),
                 SizedBox(height: AppTheme.kSpacing3x),
-                Text(
+                /*Text(
                   'Sereni',
                   style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                     color: AppTheme.kTextGreen,
                     fontWeight: FontWeight.bold,
                   ),
-                ),
+                ),*/
                 SizedBox(height: AppTheme.kSpacing),
                 Text(
                   'Your Mental Wellness Companion',
@@ -154,7 +153,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   }
 }
 
-// Custom painter to draw animated circular stroke
 class CircleStrokePainter extends CustomPainter {
   final double progress;
   final Color color;
