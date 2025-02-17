@@ -133,58 +133,125 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             final isWideScreen = constraints.maxWidth > 800;
             
             if (isWideScreen) {
-              return Row(
+              return Stack(
                 children: [
-                  Expanded(
-                    flex: 8,
-                    child: Center(
-                      child: SizedBox(
-                        height: constraints.maxHeight * 0.8,
-                        child: _buildGifSection(),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    flex: 5,
-                    child: SingleChildScrollView(
-                      child: Padding(
-                        padding: EdgeInsets.all(AppTheme.kSpacing6x),
-                        child: SizedBox(
-                          height: constraints.maxHeight - (AppTheme.kSpacing6x * 2),
-                          child: Align(
-                            alignment: Alignment.centerLeft, // Align content to the left
-                            child: _buildContentSection(),
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 8,
+                        child: Center(
+                          child: SizedBox(
+                            height: constraints.maxHeight * 0.8,
+                            child: _buildGifSection(),
                           ),
                         ),
                       ),
-                    ),
+                      Expanded(
+                        flex: 5,
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: AppTheme.kSpacing6x,
+                            vertical: AppTheme.kSpacing4x, // Added vertical padding
+                          ),
+                          child: Center( // Ensures vertical centering
+                            child: SizedBox(
+                              height: constraints.maxHeight * 0.55, // Reduced height to ensure content fits
+                              child: Align(
+                                alignment: Alignment.center, // Center alignment on vertical axis
+                                child: _buildContentSection(),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
+                  // Back button (top left)
+                  _buildBackButton(),
                 ],
               );
             }
             
-            return SingleChildScrollView(
-              child: Padding(
-                padding: EdgeInsets.all(AppTheme.kSpacing4x),
-                child: Column(
-                  children: [
-                    SizedBox(
-                      height: constraints.maxHeight * 0.4,
-                      child: _buildGifSection(),
+            return Stack(
+              children: [
+                SingleChildScrollView(
+                  child: Padding(
+                    padding: EdgeInsets.all(AppTheme.kSpacing4x),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center, // Center alignment for mobile view
+                      children: [
+                        SizedBox(height: AppTheme.kSpacing4x), // Added extra top padding
+                        SizedBox(
+                          height: constraints.maxHeight * 0.4,
+                          child: _buildGifSection(),
+                        ),
+                        SizedBox(height: AppTheme.kSpacing4x),
+                        SizedBox(
+                          height: constraints.maxHeight * 0.5,
+                          child: _buildContentSection(),
+                        ),
+                      ],
                     ),
-                    SizedBox(height: AppTheme.kSpacing4x),
-                    SizedBox(
-                      height: constraints.maxHeight * 0.5,
-                      child: _buildContentSection(),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+                // Back button (top left)
+                _buildBackButton(),
+              ],
             );
           },
         ),
       ),
     );
+  }
+
+  Widget _buildBackButton() {
+    // Only show back button if not on first page
+    final currentPageIndex = _contentPageController.hasClients 
+        ? _contentPageController.page?.round() ?? 0 
+        : 0;
+        
+    if (currentPageIndex == 0) {
+      return const SizedBox.shrink(); // Don't show back button on first page
+    }
+    
+    return Positioned(
+      top: AppTheme.kSpacing2x,
+      left: AppTheme.kSpacing2x,
+      child: ElevatedButton(
+        onPressed: _handleBackNavigation,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppTheme.kAccentBrown,
+          foregroundColor: AppTheme.kWhite,
+          shape: const CircleBorder(),
+          padding: EdgeInsets.all(AppTheme.kSpacing2x),
+          elevation: 4,
+        ),
+        child: const Icon(
+          Icons.arrow_back,
+          color: AppTheme.kWhite,
+          size: 24,
+        ),
+      ),
+    );
+  }
+
+  void _handleBackNavigation() {
+    if (!_contentPageController.hasClients) return;
+    
+    final currentPage = _contentPageController.page?.round() ?? 0;
+    if (currentPage > 0) {
+      // Animate both PageViews together to previous page
+      _gifPageController.animateToPage(
+        currentPage - 1,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+      _contentPageController.animateToPage(
+        currentPage - 1,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
   }
 
   Widget _buildGifSection() {
@@ -231,23 +298,23 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start, // Left alignment for content
             children: [
-              // Make the main text even bigger
+              // Updated text weight by one level down
               Text(
                 pages[index].title,
                 style: Theme.of(context).textTheme.displayLarge?.copyWith(
                   color: AppTheme.kTextGreen,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 42, // Increased font size
+                  fontWeight: FontWeight.w800, // Changed from w900 to w800
+                  fontSize: 48, // Kept the font size as 48
                 ),
                 textAlign: TextAlign.left,
               ),
               SizedBox(height: AppTheme.kSpacing2x),
               
-              // Separator line - made wider, thicker, and accent brown
+              // Separator line - kept as is
               Container(
-                width: 180, // Wider separator
-                height: 4, // Thicker separator
-                color: AppTheme.kAccentBrown, // Changed color to accent brown
+                width: 180,
+                height: 4,
+                color: AppTheme.kAccentBrown,
               ),
               SizedBox(height: AppTheme.kSpacing3x),
               
