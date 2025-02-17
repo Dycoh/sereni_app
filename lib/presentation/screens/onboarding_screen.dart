@@ -12,14 +12,14 @@ class OnboardingPage {
   final String? subtitle;
   final String gifPath;
   final String buttonText;
-  final Widget? input;
+  final Widget Function(BuildContext) inputBuilder;
 
   OnboardingPage({
     required this.title,
     this.subtitle,
     required this.gifPath,
     required this.buttonText,
-    this.input,
+    required this.inputBuilder,
   });
 }
 
@@ -31,91 +31,194 @@ class OnboardingScreen extends StatefulWidget {
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
-  // Separate controllers for each PageView
-  final PageController _gifPageController = PageController();
   final PageController _contentPageController = PageController();
+  final PageController _gifPageController = PageController();
   
   String? _userName;
   String? _selectedGender;
-  int? _selectedAge;
+  double _selectedAge = 25; // Default age
+  bool _showNameError = false;
+  int _lastVisitedPage = 0;
+  bool _hasNavigatedBack = false;
+  String? _previousName;
+  TextEditingController _nameController = TextEditingController();
   
   late final List<OnboardingPage> pages;
 
   @override
   void initState() {
     super.initState();
+    _initializePages();
+    _contentPageController.addListener(_handlePageChange);
+  }
+
+  void _handlePageChange() {
+    if (!_contentPageController.hasClients) return;
+    
+    final currentPage = _contentPageController.page?.round() ?? 0;
+    
+    // Sync gif page controller with content page controller
+    if (_gifPageController.hasClients && _gifPageController.page?.round() != currentPage) {
+      _gifPageController.animateToPage(
+        currentPage,
+        duration: const Duration(milliseconds: 150), // Quicker transition
+        curve: Curves.easeInOut,
+      );
+    }
+    
+    // Reset data when user goes back
+    if (currentPage < _lastVisitedPage) {
+      setState(() {
+        _hasNavigatedBack = true;
+        
+        // Reset gender selection if user goes back to page 0 from any page
+        if (currentPage == 0) {
+          _selectedGender = null;
+          _selectedAge = 25;
+          _previousName = _userName;
+          
+          // Check if the name field is empty when returning to the first page and show error if needed
+          if (_userName == null || _userName!.isEmpty) {
+            _showNameError = true;
+          }
+        }
+        
+        // Reset age selection if user goes back to page 1 from page 2
+        if (currentPage == 1 && _lastVisitedPage == 2) {
+          _selectedAge = 25;
+        }
+      });
+    }
+    
+    _lastVisitedPage = currentPage;
+  }
+
+  void _initializePages() {
     pages = [
       OnboardingPage(
         title: 'Hello,\nI\'m Sereni...',
         subtitle: 'What\'s your name?',
         gifPath: AssetPaths.sereniBot,
         buttonText: 'Continue',
-        input: TextField(
-          onChanged: (value) => setState(() => _userName = value),
-          decoration: InputDecoration(
-            hintText: 'Enter your name',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppTheme.kRadiusMedium),
-              borderSide: BorderSide.none,
+        inputBuilder: (context) => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: _nameController,
+              onChanged: (value) {
+                setState(() {
+                  _userName = value;
+                  // Only hide error when user types something
+                  if (value.isNotEmpty) {
+                    _showNameError = false;
+                  }
+                  
+                  // If user changes name and previously navigated back, reset inputs for next pages
+                  if (_hasNavigatedBack && _previousName != value) {
+                    _selectedGender = null;
+                    _selectedAge = 25;
+                  }
+                });
+              },
+              decoration: InputDecoration(
+                hintText: 'Enter your name',
+                border: _showNameError ? OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.kRadiusMedium),
+                  borderSide: const BorderSide(color: Colors.red),
+                ) : OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.kRadiusMedium),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.kRadiusMedium),
+                  borderSide: const BorderSide(color: AppTheme.kPrimaryGreen),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.kRadiusMedium),
+                  borderSide: const BorderSide(color: AppTheme.kGray200),
+                ),
+                filled: true,
+                fillColor: AppTheme.kWhite,
+                contentPadding: const EdgeInsets.all(AppTheme.kSpacing2x),
+                errorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.kRadiusMedium),
+                  borderSide: const BorderSide(color: Colors.red),
+                ),
+              ),
             ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppTheme.kRadiusMedium),
-              borderSide: const BorderSide(color: AppTheme.kPrimaryGreen),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppTheme.kRadiusMedium),
-              borderSide: const BorderSide(color: AppTheme.kGray200),
-            ),
-            filled: true,
-            fillColor: AppTheme.kWhite,
-            contentPadding: const EdgeInsets.all(AppTheme.kSpacing2x),
-          ),
+            if (_showNameError) ...[
+              SizedBox(height: AppTheme.kSpacing),
+              Text(
+                'Please enter your name',
+                style: TextStyle(
+                  color: Colors.red,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ],
         ),
       ),
       OnboardingPage(
-        title: 'Whats your\nGender?',
+        title: 'What\'s your\nGender?',
         gifPath: AssetPaths.genderBot,
         buttonText: 'Continue',
-        input: Row(
+        inputBuilder: (context) => Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
             _GenderButton(
               label: 'Male',
               isSelected: _selectedGender == 'Male',
+              isEnabled: _selectedGender == null || _selectedGender == 'Male',
               onTap: () => setState(() => _selectedGender = 'Male'),
             ),
             SizedBox(width: AppTheme.kSpacing2x),
             _GenderButton(
               label: 'Female',
               isSelected: _selectedGender == 'Female',
+              isEnabled: _selectedGender == null || _selectedGender == 'Female',
               onTap: () => setState(() => _selectedGender = 'Female'),
             ),
           ],
         ),
       ),
       OnboardingPage(
-        title: 'Whats your\nAge?',
+        title: 'What\'s your\nAge?',
         gifPath: AssetPaths.ageBot,
         buttonText: 'Sign in',
-        input: Row(
-          mainAxisAlignment: MainAxisAlignment.start,
+        inputBuilder: (context) => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _AgeButton(
-              age: '18',
-              isSelected: _selectedAge == 18,
-              onTap: () => setState(() => _selectedAge = 18),
+            Text(
+              '${_selectedAge.round()} years',
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                color: AppTheme.kTextGreen,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-            SizedBox(width: AppTheme.kSpacing2x),
-            _AgeButton(
-              age: '25',
-              isSelected: _selectedAge == 25,
-              onTap: () => setState(() => _selectedAge = 25),
+            SizedBox(height: AppTheme.kSpacing2x),
+            SliderTheme(
+              data: SliderTheme.of(context).copyWith(
+                activeTrackColor: AppTheme.kPrimaryGreen,
+                inactiveTrackColor: AppTheme.kGray200,
+                thumbColor: AppTheme.kPrimaryGreen,
+                overlayColor: const Color.fromRGBO(15, 180, 0, 0.2),
+                trackHeight: 4.0,
+              ),
+              child: Slider(
+                value: _selectedAge,
+                min: 18,
+                max: 75,
+                divisions: 57,
+                onChanged: (value) => setState(() => _selectedAge = value),
+              ),
             ),
-            SizedBox(width: AppTheme.kSpacing2x),
-            _AgeButton(
-              age: '60',
-              isSelected: _selectedAge == 60,
-              onTap: () => setState(() => _selectedAge = 60),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('18', style: Theme.of(context).textTheme.bodySmall),
+                Text('75', style: Theme.of(context).textTheme.bodySmall),
+              ],
             ),
           ],
         ),
@@ -128,14 +231,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     return Scaffold(
       backgroundColor: AppTheme.kBackgroundColor,
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final isWideScreen = constraints.maxWidth > 800;
-            
-            if (isWideScreen) {
-              return Stack(
-                children: [
-                  Row(
+        child: Stack(
+          children: [
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isWideScreen = constraints.maxWidth > 800;
+                
+                if (isWideScreen) {
+                  return Row(
                     children: [
                       Expanded(
                         flex: 8,
@@ -151,36 +254,27 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         child: Padding(
                           padding: EdgeInsets.symmetric(
                             horizontal: AppTheme.kSpacing6x,
-                            vertical: AppTheme.kSpacing4x, // Added vertical padding
+                            vertical: AppTheme.kSpacing4x,
                           ),
-                          child: Center( // Ensures vertical centering
+                          child: Center(
                             child: SizedBox(
-                              height: constraints.maxHeight * 0.55, // Reduced height to ensure content fits
-                              child: Align(
-                                alignment: Alignment.center, // Center alignment on vertical axis
-                                child: _buildContentSection(),
-                              ),
+                              height: constraints.maxHeight * 0.55,
+                              child: _buildContentSection(),
                             ),
                           ),
                         ),
                       ),
                     ],
-                  ),
-                  // Back button (top left)
-                  _buildBackButton(),
-                ],
-              );
-            }
-            
-            return Stack(
-              children: [
-                SingleChildScrollView(
+                  );
+                }
+                
+                return SingleChildScrollView(
                   child: Padding(
                     padding: EdgeInsets.all(AppTheme.kSpacing4x),
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center, // Center alignment for mobile view
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        SizedBox(height: AppTheme.kSpacing4x), // Added extra top padding
+                        SizedBox(height: AppTheme.kSpacing4x),
                         SizedBox(
                           height: constraints.maxHeight * 0.4,
                           child: _buildGifSection(),
@@ -193,65 +287,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       ],
                     ),
                   ),
-                ),
-                // Back button (top left)
-                _buildBackButton(),
-              ],
-            );
-          },
+                );
+              },
+            ),
+            _buildBackButton(),
+            _buildProgressIndicator(),
+          ],
         ),
       ),
     );
-  }
-
-  Widget _buildBackButton() {
-    // Only show back button if not on first page
-    final currentPageIndex = _contentPageController.hasClients 
-        ? _contentPageController.page?.round() ?? 0 
-        : 0;
-        
-    if (currentPageIndex == 0) {
-      return const SizedBox.shrink(); // Don't show back button on first page
-    }
-    
-    return Positioned(
-      top: AppTheme.kSpacing2x,
-      left: AppTheme.kSpacing2x,
-      child: ElevatedButton(
-        onPressed: _handleBackNavigation,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppTheme.kAccentBrown,
-          foregroundColor: AppTheme.kWhite,
-          shape: const CircleBorder(),
-          padding: EdgeInsets.all(AppTheme.kSpacing2x),
-          elevation: 4,
-        ),
-        child: const Icon(
-          Icons.arrow_back,
-          color: AppTheme.kWhite,
-          size: 24,
-        ),
-      ),
-    );
-  }
-
-  void _handleBackNavigation() {
-    if (!_contentPageController.hasClients) return;
-    
-    final currentPage = _contentPageController.page?.round() ?? 0;
-    if (currentPage > 0) {
-      // Animate both PageViews together to previous page
-      _gifPageController.animateToPage(
-        currentPage - 1,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-      _contentPageController.animateToPage(
-        currentPage - 1,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-    }
   }
 
   Widget _buildGifSection() {
@@ -260,61 +304,93 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       physics: const NeverScrollableScrollPhysics(),
       itemCount: pages.length,
       itemBuilder: (context, index) {
-        return Center(
-          child: Image.asset(
-            pages[index].gifPath,
-            fit: BoxFit.contain,
-            errorBuilder: (context, error, stackTrace) {
-              return Container(
-                decoration: BoxDecoration(
-                  color: AppTheme.kGray200,
-                  borderRadius: BorderRadius.circular(AppTheme.kRadiusLarge),
-                ),
-                child: const Center(
-                  child: Icon(Icons.image_not_supported, size: 48),
-                ),
-              );
-            },
-          ),
+        return Image.asset(
+          pages[index].gifPath,
+          fit: BoxFit.contain,
         );
       },
     );
   }
 
-  Widget _buildContentSection() {
-    // Using _contentPageController instead of _pageController
-    final currentPageIndex = _contentPageController.hasClients 
-        ? _contentPageController.page?.round() ?? 0 
+  Widget _buildBackButton() {
+    final currentPage = _contentPageController.hasClients
+        ? (_contentPageController.page ?? 0).round()
         : 0;
     
+    if (currentPage == 0) return const SizedBox.shrink();
+    
+    return Positioned(
+      top: AppTheme.kSpacing2x,
+      left: AppTheme.kSpacing2x,
+      child: IconButton(
+        icon: const Icon(Icons.arrow_back),
+        onPressed: () {
+          _contentPageController.previousPage(
+            duration: const Duration(milliseconds: 150), // Quicker transition
+            curve: Curves.easeInOut,
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildProgressIndicator() {
+    return Positioned(
+      top: AppTheme.kSpacing2x,
+      right: AppTheme.kSpacing2x,
+      child: Row(
+        children: List.generate(
+          pages.length,
+          (index) {
+            final currentPage = _contentPageController.hasClients
+                ? (_contentPageController.page ?? 0).round()
+                : 0;
+            return Container(
+              width: 24,
+              height: 4,
+              margin: EdgeInsets.only(left: AppTheme.kSpacing),
+              decoration: BoxDecoration(
+                color: index <= currentPage
+                    ? AppTheme.kPrimaryGreen
+                    : AppTheme.kGray200,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContentSection() {
     return PageView.builder(
       controller: _contentPageController,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: pages.length,
       itemBuilder: (context, index) {
-        // Wrap the Column in SingleChildScrollView to handle overflow
         return SingleChildScrollView(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start, // Left alignment for content
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Updated text weight by one level down
               Text(
                 pages[index].title,
                 style: Theme.of(context).textTheme.displayLarge?.copyWith(
                   color: AppTheme.kTextGreen,
-                  fontWeight: FontWeight.w800, // Changed from w900 to w800
-                  fontSize: 48, // Kept the font size as 48
+                  fontWeight: FontWeight.w800,
+                  fontSize: 48,
                 ),
                 textAlign: TextAlign.left,
               ),
               SizedBox(height: AppTheme.kSpacing2x),
               
-              // Separator line - kept as is
               Container(
                 width: 180,
-                height: 4,
-                color: AppTheme.kAccentBrown,
+                height: 3,
+                decoration: BoxDecoration(
+                  color: const Color.fromRGBO(139, 69, 19, 0.75),
+                  borderRadius: BorderRadius.circular(1.5),
+                ),
               ),
               SizedBox(height: AppTheme.kSpacing3x),
               
@@ -322,63 +398,86 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 Text(
                   pages[index].subtitle!,
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    color: AppTheme.kGray700,
+                    color: AppTheme.kTextGreen,
                   ),
                   textAlign: TextAlign.left,
                 ),
                 SizedBox(height: AppTheme.kSpacing3x),
               ],
               
-              if (pages[index].input != null) ...[
-                SizedBox(
-                  width: double.infinity,
-                  child: pages[index].input!,
-                ),
-                SizedBox(height: AppTheme.kSpacing4x),
-              ],
-              
-              Align(
-                alignment: Alignment.centerLeft,
-                child: ElevatedButton(
-                  onPressed: () => _handleNavigation(index),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.kAccentBrown,
-                    foregroundColor: AppTheme.kWhite,
-                    padding: EdgeInsets.symmetric(
-                      horizontal: AppTheme.kSpacing4x,
-                      vertical: AppTheme.kSpacing2x,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(50.0),
-                    ),
-                    textStyle: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppTheme.kSpacing,
-                      vertical: AppTheme.kSpacing,
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(pages[index].buttonText),
-                        const SizedBox(width: 8), // Fixed width
-                        // Icon color set to white
-                        const Icon(Icons.arrow_forward, size: 18, color: AppTheme.kWhite),
-                      ],
-                    ),
-                  ),
-                ),
+              SizedBox(
+                width: double.infinity,
+                child: pages[index].inputBuilder(context),
               ),
-              // Add some bottom padding to ensure content is visible
-              SizedBox(height: AppTheme.kSpacing3x),
+              SizedBox(height: AppTheme.kSpacing4x),
+              
+              _buildNavigationButton(index),
             ],
           ),
         );
       },
     );
+  }
+
+  Widget _buildNavigationButton(int index) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: ElevatedButton(
+        onPressed: () => _handleNavigation(index),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppTheme.kAccentBrown,
+          foregroundColor: AppTheme.kWhite,
+          padding: EdgeInsets.symmetric(
+            horizontal: AppTheme.kSpacing4x,
+            vertical: AppTheme.kSpacing2x,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(50.0),
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppTheme.kSpacing,
+            vertical: AppTheme.kSpacing,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(pages[index].buttonText),
+              const SizedBox(width: 8),
+              const Icon(Icons.arrow_forward, size: 18, color: AppTheme.kWhite),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _handleNavigation(int currentIndex) {
+    // Always validate name on the first page
+    if (currentIndex == 0) {
+      if (_userName == null || _userName!.isEmpty) {
+        setState(() {
+          _showNameError = true;
+        });
+        return; // Don't proceed if name is empty
+      }
+    }
+    
+    if (_canProceed(currentIndex)) {
+      if (currentIndex < pages.length - 1) {
+        // Reset the "has navigated back" flag when proceeding forward normally
+        _hasNavigatedBack = false;
+        
+        _contentPageController.nextPage(
+          duration: const Duration(milliseconds: 150), // Quicker transition
+          curve: Curves.easeInOut,
+        );
+      } else {
+        // Handle completion - Navigate to next screen or submit data
+        // TODO: Implement navigation to next screen
+      }
+    }
   }
 
   bool _canProceed(int currentIndex) {
@@ -388,51 +487,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       case 1:
         return _selectedGender != null;
       case 2:
-        return _selectedAge != null;
+        return true; // Age always has a value due to slider
       default:
         return false;
     }
   }
 
-  void _handleNavigation(int currentIndex) {
-    if (!_canProceed(currentIndex)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Please fill in the required information'),
-          duration: const Duration(seconds: 2),
-          backgroundColor: AppTheme.kErrorRed,
-        ),
-      );
-      return;
-    }
-
-    if (currentIndex < pages.length - 1) {
-      // Animate both PageViews together
-      _gifPageController.animateToPage(
-        currentIndex + 1,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-      _contentPageController.animateToPage(
-        currentIndex + 1,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-    } else {
-      // Navigate to home screen or handle sign in
-      debugPrint('Onboarding Complete with:');
-      debugPrint('Name: $_userName');
-      debugPrint('Gender: $_selectedGender');
-      debugPrint('Age: $_selectedAge');
-      // TODO: Add navigation to home screen
-    }
-  }
-
   @override
   void dispose() {
-    // Dispose both controllers
-    _gifPageController.dispose();
+    _contentPageController.removeListener(_handlePageChange);
     _contentPageController.dispose();
+    _gifPageController.dispose();
+    _nameController.dispose();
     super.dispose();
   }
 }
@@ -440,31 +506,34 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 class _GenderButton extends StatelessWidget {
   final String label;
   final bool isSelected;
+  final bool isEnabled;
   final VoidCallback onTap;
 
   const _GenderButton({
     required this.label,
     required this.isSelected,
+    required this.isEnabled,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
-      child: Container(
+      onTap: isEnabled ? onTap : null,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
         padding: EdgeInsets.symmetric(
           horizontal: AppTheme.kSpacing3x,
           vertical: AppTheme.kSpacing2x,
         ),
         decoration: BoxDecoration(
           color: isSelected 
-            ? AppTheme.kPrimaryGreen.withOpacity(0.2)
+            ? AppTheme.kPrimaryGreen
             : Colors.transparent,
           border: Border.all(
-            color: isSelected 
-              ? AppTheme.kPrimaryGreen
-              : AppTheme.kGray200,
+            color: isEnabled
+              ? (isSelected ? AppTheme.kPrimaryGreen : AppTheme.kGray200)
+              : AppTheme.kGray400,
             width: 2,
           ),
           borderRadius: BorderRadius.circular(AppTheme.kRadiusLarge),
@@ -473,70 +542,12 @@ class _GenderButton extends StatelessWidget {
           label,
           style: Theme.of(context).textTheme.labelLarge?.copyWith(
             color: isSelected 
-              ? AppTheme.kPrimaryGreen
-              : AppTheme.kTextGreen,
+              ? AppTheme.kWhite
+              : (isEnabled ? AppTheme.kTextGreen : AppTheme.kGray400),
             fontWeight: isSelected 
               ? FontWeight.bold
               : FontWeight.normal,
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _AgeButton extends StatelessWidget {
-  final String age;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const _AgeButton({
-    required this.age,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: EdgeInsets.all(AppTheme.kSpacing2x),
-        decoration: BoxDecoration(
-          color: isSelected 
-            ? AppTheme.kPrimaryGreen.withOpacity(0.2)
-            : Colors.transparent,
-          border: Border.all(
-            color: isSelected 
-              ? AppTheme.kPrimaryGreen
-              : AppTheme.kGray200,
-            width: 2,
-          ),
-          borderRadius: BorderRadius.circular(AppTheme.kRadiusLarge),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              age,
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                color: isSelected 
-                  ? AppTheme.kPrimaryGreen
-                  : AppTheme.kTextGreen,
-                fontWeight: isSelected 
-                  ? FontWeight.bold
-                  : FontWeight.normal,
-              ),
-            ),
-            Text(
-              'Years',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: isSelected 
-                  ? AppTheme.kPrimaryGreen
-                  : AppTheme.kTextGreen,
-              ),
-            ),
-          ],
         ),
       ),
     );
