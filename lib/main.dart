@@ -1,122 +1,143 @@
+import 'dart:async';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:path_provider/path_provider.dart';
 
-void main() {
-  runApp(const MyApp());
+// Firebase configuration import
+import 'configuration/firebase_options.dart';
+
+// App entry point
+import 'app/app.dart';
+
+// Service imports
+import 'services/analytics_service.dart';
+import 'services/storage_service.dart';
+import 'services/navigation_service.dart';
+import 'services/ai_service.dart';
+
+// Repository imports
+import 'data/repositories/auth_repository.dart';
+import 'data/repositories/journal_repository.dart';
+import 'data/repositories/chat_repository.dart';
+import 'data/repositories/user_repository.dart';
+
+// BLoC imports
+import 'presentation/blocs/auth/auth_bloc.dart';
+import 'presentation/blocs/journal/journal_bloc.dart';
+import 'presentation/blocs/chat/chat_bloc.dart';
+import 'presentation/blocs/profile/profile_bloc.dart';
+
+/// Custom BLoC observer for logging state changes
+class AppBlocObserver extends BlocObserver {
+  @override
+  void onChange(BlocBase bloc, Change change) {
+    super.onChange(bloc, change);
+    debugPrint('${bloc.runtimeType} $change');
+  }
+
+  @override
+  void onError(BlocBase bloc, Object error, StackTrace stackTrace) {
+    debugPrint('${bloc.runtimeType} $error $stackTrace');
+    super.onError(bloc, error, stackTrace);
+  }
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  // This widget is the root of your application.
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+/// Initialize all services required by the app
+Future<void> initializeServices() async {
+  try {
+    // Initialize Firebase
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
     );
+
+    // Initialize Hive for local storage
+    final appDocumentDir = await getApplicationDocumentsDirectory();
+    await Hive.initFlutter(appDocumentDir.path);
+    
+    // Register Hive adapters here if needed
+    // Hive.registerAdapter(UserAdapter());
+    // Hive.registerAdapter(JournalAdapter());
+    
+    // Open Hive boxes
+    await Hive.openBox('settings');
+    await Hive.openBox('user_data');
+    await Hive.openBox('journals');
+  } catch (e) {
+    debugPrint('Error initializing services: $e');
+    rethrow;
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+/// Main entry point of the application
+Future<void> main() async {
+  // Ensure Flutter bindings are initialized
+  WidgetsFlutterBinding.ensureInitialized();
 
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
+  // Set up error handling
+  FlutterError.onError = (details) {
+    FlutterError.presentError(details);
+    debugPrint(details.toString());
+  };
 
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
+  // Initialize services
+  await initializeServices();
 
-  final String title;
+  // Set up BLoC observer
+  Bloc.observer = AppBlocObserver();
 
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+  // Run the app inside a zone to catch all errors
+  runZonedGuarded(
+    () => runApp(
+      MultiRepositoryProvider(
+        providers: [
+          // Repository Providers
+          RepositoryProvider<AuthRepository>(
+            create: (context) => AuthRepository(),
+          ),
+          RepositoryProvider<UserRepository>(
+            create: (context) => UserRepository(),
+          ),
+          RepositoryProvider<JournalRepository>(
+            create: (context) => JournalRepository(),
+          ),
+          RepositoryProvider<ChatRepository>(
+            create: (context) => ChatRepository(),
+          ),
+        ],
+        child: MultiBlocProvider(
+          providers: [
+            // BLoC Providers
+            BlocProvider<AuthBloc>(
+              create: (context) => AuthBloc(
+                authRepository: context.read<AuthRepository>(),
+              ),
+            ),
+            BlocProvider<ProfileBloc>(
+              create: (context) => ProfileBloc(
+                userRepository: context.read<UserRepository>(),
+              ),
+            ),
+            BlocProvider<JournalBloc>(
+              create: (context) => JournalBloc(
+                journalRepository: context.read<JournalRepository>(),
+              ),
+            ),
+            BlocProvider<ChatBloc>(
+              create: (context) => ChatBloc(
+                chatRepository: context.read<ChatRepository>(),
+              ),
             ),
           ],
+          child: const SereniApp(),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
-    );
-  }
+    ),
+    (error, stack) {
+      debugPrint('Uncaught error: $error');
+      debugPrint('Stack trace: $stack');
+      // Here you could add error reporting service like Firebase Crashlytics
+    },
+  );
 }

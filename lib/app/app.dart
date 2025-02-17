@@ -1,5 +1,7 @@
+// lib/app/app.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../presentation/screens/splash_screen.dart';  // Updated import
 import 'theme/theme.dart';
 
 class SereniApp extends StatelessWidget {
@@ -10,7 +12,7 @@ class SereniApp extends StatelessWidget {
     return MaterialApp(
       title: 'Sereni',
       theme: AppTheme.lightTheme,
-      home: const MySplashScreen(), // Replace 'SplashScreen' with the name of your custom SplashScreen class
+      home: const SplashScreen(),  // Updated class name
     );
   }
 }

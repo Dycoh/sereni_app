@@ -22,9 +22,9 @@ class AppTheme {
       useMaterial3: true,
       colorScheme: ColorScheme.fromSeed(
         seedColor: kPrimaryGreen,
-        surface: kBackgroundColor,
+        surface: const Color.fromARGB(255, 0, 240, 240),
       ),
-      scaffoldBackgroundColor: kBackgroundColor,
+      scaffoldBackgroundColor: const Color.fromARGB(255, 250, 0, 250),
       textTheme: GoogleFonts.poppinsTextTheme(),
       // Add more theme configurations
     );
