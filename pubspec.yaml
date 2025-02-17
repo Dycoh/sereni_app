@@ -36,7 +36,7 @@ dependencies:
   url_launcher: ^6.3.1
   path_provider: ^2.1.5
 
-    # AI/ML
+  # AI/ML
   google_generative_ai: ^0.4.6
   
   # PDF & Reports
@@ -60,8 +60,11 @@ dev_dependencies:
 
 
 flutter:
-
+  assets:
+    - assets/logos/
+    - assets/logos/sereni_logo.png  # Specify the exact file path
   uses-material-design: true
+  
 
   # To add custom fonts to your application, add a fonts section here,
   # in this "flutter" section. Each entry in this list should have a
