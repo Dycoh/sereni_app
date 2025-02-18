@@ -19,7 +19,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   void initState() {
     super.initState();
     _setupAnimation();
-    _checkAuthStatus();
   }
 
   void _setupAnimation() {
@@ -47,39 +46,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     _animationController.forward();
   }
 
-  Future<void> _checkAuthStatus() async {
-    await Future.delayed(const Duration(seconds: 6));
-
-    if (!mounted) return;
-
-    final bool isFirstTime = true; // Replace with actual first-time check
-    final bool isLoggedIn = false; // Replace with actual auth check
-
-    if (isFirstTime) {
-      _navigateToOnboarding();
-    } else if (!isLoggedIn) {
-      _navigateToLogin();
-    } else {
-      _navigateToHome();
-    }
-  }
-
-  void _navigateToOnboarding() {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const OnboardingScreen()),
-    );
-  }
-
-  void _navigateToLogin() {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const SignInScreen()),
-    );
-  }
-
-  void _navigateToHome() {
-    // TODO: Implement home navigation
-  }
-
   @override
   void dispose() {
     _animationController.dispose();
@@ -94,54 +60,30 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
         child: Center(
           child: FadeTransition(
             opacity: _fadeAnimation,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+            child: Stack(
+              alignment: Alignment.center,
               children: [
-                Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    // Animated rotating circle
-                    AnimatedBuilder(
-                      animation: _rotationAnimation,
-                      builder: (context, child) {
-                        return CustomPaint(
-                          size: const Size(160, 160),
-                          painter: CircleStrokePainter(
-                            progress: _rotationAnimation.value,
-                            color: AppTheme.kPrimaryGreen,
-                          ),
-                        );
-                      },
-                    ),
-                    // Centered logo
-                    Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        color: AppTheme.kPrimaryGreen.withOpacity(0.1),
-                        shape: BoxShape.circle,
+                // Animated rotating circle
+                AnimatedBuilder(
+                  animation: _rotationAnimation,
+                  builder: (context, child) {
+                    return CustomPaint(
+                      size: const Size(160, 160),
+                      painter: CircleStrokePainter(
+                        progress: _rotationAnimation.value,
+                        color: AppTheme.kPrimaryGreen,
                       ),
-                      child: Image.asset(
-                        'assets/logos/sereni_logo.png',
-                        width: 32,
-                        height: 32,
-                      ),
-                    ),
-                  ],
+                    );
+                  },
                 ),
-                SizedBox(height: AppTheme.kSpacing3x),
-                /*Text(
-                  'Sereni',
-                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                    color: AppTheme.kTextGreen,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),*/
-                SizedBox(height: AppTheme.kSpacing),
-                Text(
-                  'Your Mental Wellness Companion',
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: AppTheme.kTextGreen.withOpacity(0.7),
+                // Centered logo
+                SizedBox(
+                  width: 120,
+                  height: 120,
+                  child: Image.asset(
+                    'assets/logos/sereni_logo.png',
+                    width: 32,
+                    height: 32,
                   ),
                 ),
               ],

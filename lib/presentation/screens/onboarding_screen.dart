@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../app/theme/theme.dart';
+import '../../app/routes.dart';
 
 class AssetPaths {
   static const String nameBot = 'assets/gifs/onboarding_name_bot.gif';
@@ -228,72 +229,76 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     ];
   }
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.kBackgroundColor,
       body: SafeArea(
-        child: Stack(
-          children: [
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final isWideScreen = constraints.maxWidth > 800;
-                
-                if (isWideScreen) {
-                  return Row(
-                    children: [
-                      Expanded(
-                        flex: 8,
-                        child: Center(
-                          child: SizedBox(
-                            height: constraints.maxHeight * 0.8,
-                            child: _buildGifSection(),
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        flex: 5,
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: AppTheme.kSpacing6x,
-                            vertical: AppTheme.kSpacing2x, // Reduced vertical padding for more space
-                          ),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.1), // 10% padding
+          child: Stack(
+            children: [
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final isWideScreen = constraints.maxWidth > 800;
+                  
+                  if (isWideScreen) {
+                    return Row(
+                      children: [
+                        Expanded(
+                          flex: 6, // Changed from 8 to 6
                           child: Center(
                             child: SizedBox(
-                              height: constraints.maxHeight * 0.7, // Increased height for more space
-                              child: _buildContentSection(),
+                              height: constraints.maxHeight * 0.8,
+                              child: _buildGifSection(),
                             ),
                           ),
                         ),
-                      ),
-                    ],
-                  );
-                }
-                
-                return SingleChildScrollView(
-                  child: Padding(
-                    padding: EdgeInsets.all(AppTheme.kSpacing4x),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        SizedBox(height: AppTheme.kSpacing2x), // Reduced top spacing
-                        SizedBox(
-                          height: constraints.maxHeight * 0.4,
-                          child: _buildGifSection(),
-                        ),
-                        SizedBox(height: AppTheme.kSpacing2x), // Reduced spacing
-                        SizedBox(
-                          height: constraints.maxHeight * 0.6, // Increased height for more space
-                          child: _buildContentSection(),
+                        Expanded(
+                          flex: 6, // Changed from 5 to 6
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: AppTheme.kSpacing6x,
+                              vertical: AppTheme.kSpacing2x,
+                            ),
+                            child: Center(
+                              child: SizedBox(
+                                height: constraints.maxHeight * 0.7,
+                                child: _buildContentSection(),
+                              ),
+                            ),
+                          ),
                         ),
                       ],
+                    );
+                  }
+                  
+                  return SingleChildScrollView(
+                    child: Padding(
+                      padding: EdgeInsets.all(AppTheme.kSpacing4x),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(height: AppTheme.kSpacing2x),
+                          SizedBox(
+                            height: constraints.maxHeight * 0.4,
+                            child: _buildGifSection(),
+                          ),
+                          SizedBox(height: AppTheme.kSpacing2x),
+                          SizedBox(
+                            height: constraints.maxHeight * 0.6,
+                            child: _buildContentSection(),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                );
-              },
-            ),
-            _buildBackButton(),
-          ],
+                  );
+                },
+              ),
+              _buildBackButton(),
+            ],
+          ),
         ),
       ),
     );
@@ -313,27 +318,27 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  Widget _buildBackButton() {
-    final currentPage = _contentPageController.hasClients
-        ? (_contentPageController.page ?? 0).round()
-        : 0;
-    
-    if (currentPage == 0) return const SizedBox.shrink();
-    
-    return Positioned(
-      top: AppTheme.kSpacing2x,
-      left: AppTheme.kSpacing2x,
-      child: IconButton(
-        icon: const Icon(Icons.arrow_back),
-        onPressed: () {
-          _contentPageController.previousPage(
-            duration: const Duration(milliseconds: 150), // Quicker transition
-            curve: Curves.easeInOut,
-          );
-        },
-      ),
-    );
-  }
+    Widget _buildBackButton() {
+      final currentPage = _contentPageController.hasClients
+          ? (_contentPageController.page ?? 0).round()
+          : 0;
+      
+      if (currentPage == 0) return const SizedBox.shrink();
+      
+      return Positioned(
+        top: AppTheme.kSpacing2x,
+        left: 16, // Fixed 16px from left edge
+        child: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            _contentPageController.previousPage(
+              duration: const Duration(milliseconds: 150),
+              curve: Curves.easeInOut,
+            );
+          },
+        ),
+      );
+    }
 
   Widget _buildProgressIndicator() {
     final currentPage = _contentPageController.hasClients
@@ -482,16 +487,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         _hasNavigatedBack = false;
         
         _contentPageController.nextPage(
-          duration: const Duration(milliseconds: 150), // Quicker transition
+          duration: const Duration(milliseconds: 150),
           curve: Curves.easeInOut,
         );
       } else {
-        // Handle completion - Navigate to next screen or submit data
-        // TODO: Implement navigation to next screen
+        // Handle completion - Navigate to sign in screen
+        RouteManager.handlePostOnboardingNavigation(context);
       }
     }
   }
-
   bool _canProceed(int currentIndex) {
     switch (currentIndex) {
       case 0:
