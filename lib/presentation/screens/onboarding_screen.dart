@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import '../../app/theme/theme.dart';
 
 class AssetPaths {
-  static const String sereniBot = 'assets/gifs/sereni_chatbot_animation.gif';
-  static const String genderBot = 'assets/gifs/gender_identity_robot.gif';
+  static const String nameBot = 'assets/gifs/onboarding_name_bot.gif';
+  static const String genderBot = 'assets/gifs/onboarding_gender_bot.gif';
   static const String ageBot = 'assets/gifs/onboarding_age_bot.gif';
 }
 
@@ -96,9 +96,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void _initializePages() {
     pages = [
       OnboardingPage(
-        title: 'Hello,\nI\'m Sereni...',
-        subtitle: 'What\'s your name?',
-        gifPath: AssetPaths.sereniBot,
+        title: 'What\'s your name?',
+        subtitle: 'So I can greet you properly each time we meet, what name would you prefer?',
+        gifPath: AssetPaths.nameBot,
         buttonText: 'Continue',
         inputBuilder: (context) => Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -123,25 +123,25 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               decoration: InputDecoration(
                 hintText: 'Enter your name',
                 border: _showNameError ? OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppTheme.kRadiusMedium),
+                  borderRadius: BorderRadius.circular(30.0), // Fully rounded edges
                   borderSide: const BorderSide(color: Colors.red),
                 ) : OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppTheme.kRadiusMedium),
+                  borderRadius: BorderRadius.circular(30.0), // Fully rounded edges
                   borderSide: BorderSide.none,
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppTheme.kRadiusMedium),
+                  borderRadius: BorderRadius.circular(30.0), // Fully rounded edges
                   borderSide: const BorderSide(color: AppTheme.kPrimaryGreen),
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppTheme.kRadiusMedium),
+                  borderRadius: BorderRadius.circular(30.0), // Fully rounded edges
                   borderSide: const BorderSide(color: AppTheme.kGray200),
                 ),
                 filled: true,
                 fillColor: AppTheme.kWhite,
                 contentPadding: const EdgeInsets.all(AppTheme.kSpacing2x),
                 errorBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppTheme.kRadiusMedium),
+                  borderRadius: BorderRadius.circular(30.0), // Fully rounded edges
                   borderSide: const BorderSide(color: Colors.red),
                 ),
               ),
@@ -161,6 +161,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       ),
       OnboardingPage(
         title: 'What\'s your\nGender?',
+        subtitle: 'This information helps me provide more relevant content based on mental health patterns across different groups.',
         gifPath: AssetPaths.genderBot,
         buttonText: 'Continue',
         inputBuilder: (context) => Row(
@@ -184,6 +185,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       ),
       OnboardingPage(
         title: 'What\'s your\nAge?',
+        subtitle: 'Understanding your life stage helps me tailor suggestions that resonate with your experiences.',
         gifPath: AssetPaths.ageBot,
         buttonText: 'Sign in',
         inputBuilder: (context) => Column(
@@ -192,7 +194,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             Text(
               '${_selectedAge.round()} years',
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                color: AppTheme.kTextGreen,
+                color: AppTheme.kTextBrown,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -254,11 +256,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         child: Padding(
                           padding: EdgeInsets.symmetric(
                             horizontal: AppTheme.kSpacing6x,
-                            vertical: AppTheme.kSpacing4x,
+                            vertical: AppTheme.kSpacing2x, // Reduced vertical padding for more space
                           ),
                           child: Center(
                             child: SizedBox(
-                              height: constraints.maxHeight * 0.55,
+                              height: constraints.maxHeight * 0.7, // Increased height for more space
                               child: _buildContentSection(),
                             ),
                           ),
@@ -274,14 +276,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        SizedBox(height: AppTheme.kSpacing4x),
+                        SizedBox(height: AppTheme.kSpacing2x), // Reduced top spacing
                         SizedBox(
                           height: constraints.maxHeight * 0.4,
                           child: _buildGifSection(),
                         ),
-                        SizedBox(height: AppTheme.kSpacing4x),
+                        SizedBox(height: AppTheme.kSpacing2x), // Reduced spacing
                         SizedBox(
-                          height: constraints.maxHeight * 0.5,
+                          height: constraints.maxHeight * 0.6, // Increased height for more space
                           child: _buildContentSection(),
                         ),
                       ],
@@ -291,7 +293,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               },
             ),
             _buildBackButton(),
-            _buildProgressIndicator(),
           ],
         ),
       ),
@@ -335,87 +336,98 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Widget _buildProgressIndicator() {
-    return Positioned(
-      top: AppTheme.kSpacing2x,
-      right: AppTheme.kSpacing2x,
-      child: Row(
-        children: List.generate(
-          pages.length,
-          (index) {
-            final currentPage = _contentPageController.hasClients
-                ? (_contentPageController.page ?? 0).round()
-                : 0;
-            return Container(
-              width: 24,
-              height: 4,
-              margin: EdgeInsets.only(left: AppTheme.kSpacing),
-              decoration: BoxDecoration(
-                color: index <= currentPage
-                    ? AppTheme.kPrimaryGreen
-                    : AppTheme.kGray200,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            );
-          },
-        ),
+    final currentPage = _contentPageController.hasClients
+        ? (_contentPageController.page ?? 0).round()
+        : 0;
+    
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.start, // Align to start/left
+      children: List.generate(
+        pages.length,
+        (index) {
+          return Container(
+            width: 24,
+            height: 8, // Changed from 4 to 8 to make the indicator twice as thick
+            margin: EdgeInsets.only(left: index > 0 ? AppTheme.kSpacing : 0),
+            decoration: BoxDecoration(
+              color: index <= currentPage
+                  ? AppTheme.kPrimaryGreen
+                  : AppTheme.kGray200,
+              borderRadius: BorderRadius.circular(4), // Increased from 2 to 4 to maintain proportions
+            ),
+          );
+        },
       ),
     );
   }
 
   Widget _buildContentSection() {
-    return PageView.builder(
-      controller: _contentPageController,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: pages.length,
-      itemBuilder: (context, index) {
-        return SingleChildScrollView(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                pages[index].title,
-                style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                  color: AppTheme.kTextGreen,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 48,
-                ),
-                textAlign: TextAlign.left,
-              ),
-              SizedBox(height: AppTheme.kSpacing2x),
-              
-              Container(
-                width: 180,
-                height: 3,
-                decoration: BoxDecoration(
-                  color: const Color.fromRGBO(139, 69, 19, 0.75),
-                  borderRadius: BorderRadius.circular(1.5),
-                ),
-              ),
-              SizedBox(height: AppTheme.kSpacing3x),
-              
-              if (pages[index].subtitle != null) ...[
-                Text(
-                  pages[index].subtitle!,
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    color: AppTheme.kTextGreen,
+    return Stack(
+      children: [
+        PageView.builder(
+          controller: _contentPageController,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: pages.length,
+          itemBuilder: (context, index) {
+            return SingleChildScrollView(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    pages[index].title,
+                    style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                      color: AppTheme.kTextBrown,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 48,
+                    ),
+                    textAlign: TextAlign.left,
                   ),
-                  textAlign: TextAlign.left,
-                ),
-                SizedBox(height: AppTheme.kSpacing3x),
-              ],
-              
-              SizedBox(
-                width: double.infinity,
-                child: pages[index].inputBuilder(context),
+                  SizedBox(height: AppTheme.kSpacing2x),
+                  
+                  Container(
+                    width: 180,
+                    height: 3,
+                    decoration: BoxDecoration(
+                      color: AppTheme.kPrimaryGreen.withOpacity(0.5), // Primary green with 50% opacity
+                      borderRadius: BorderRadius.circular(1.5),
+                    ),
+                  ),
+                  SizedBox(height: AppTheme.kSpacing3x),
+                  
+                  if (pages[index].subtitle != null) ...[
+                    Text(
+                      pages[index].subtitle!,
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        color: AppTheme.kTextBrown,
+                        fontWeight: FontWeight.w300, // Light font weight for subtitles
+                        fontSize: 16, // Smaller font size for subtitles (12px)
+                      ),
+                      textAlign: TextAlign.left,
+                    ),
+                    SizedBox(height: AppTheme.kSpacing3x),
+                  ],
+                  
+                  SizedBox(
+                    width: double.infinity,
+                    child: pages[index].inputBuilder(context),
+                  ),
+                  SizedBox(height: AppTheme.kSpacing4x),
+                  
+                  _buildNavigationButton(index),
+                  SizedBox(height: AppTheme.kSpacing6x), // Additional space for the floating indicator
+                ],
               ),
-              SizedBox(height: AppTheme.kSpacing4x),
-              
-              _buildNavigationButton(index),
-            ],
-          ),
-        );
-      },
+            );
+          },
+        ),
+        // Floating progress indicator positioned even lower
+        Positioned(
+          bottom: AppTheme.kSpacing,
+          left: 0,
+          child: _buildProgressIndicator(),
+        ),
+      ],
     );
   }
 
@@ -536,14 +548,14 @@ class _GenderButton extends StatelessWidget {
               : AppTheme.kGray400,
             width: 2,
           ),
-          borderRadius: BorderRadius.circular(AppTheme.kRadiusLarge),
+          borderRadius: BorderRadius.circular(50.0), // Fully rounded edges
         ),
         child: Text(
           label,
           style: Theme.of(context).textTheme.labelLarge?.copyWith(
             color: isSelected 
               ? AppTheme.kWhite
-              : (isEnabled ? AppTheme.kTextGreen : AppTheme.kGray400),
+              : (isEnabled ? AppTheme.kTextBrown : AppTheme.kGray400),
             fontWeight: isSelected 
               ? FontWeight.bold
               : FontWeight.normal,

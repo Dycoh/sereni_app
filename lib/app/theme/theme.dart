@@ -10,7 +10,8 @@ class AppTheme {
   static const kBackgroundColor = Color(0xFFFDFDEE); // Main app background
   static const kPrimaryGreen = Color(0xFF0FB400);    // Primary actions, buttons
   static const kAccentBrown = Color(0xFF8B4513);     // Secondary actions
-  static const kTextGreen = Color(0xFF2A2A09);       // Primary text color
+  static const kTextBrown = Color(0xFF592601);       // Primary text color - UPDATED
+  static const kTextGreen = Color(0xFF2A2A09);       // Secondary text color
 
   // Secondary Colors
   static const kLightGreenContainer = Color(0x400FB400); // Cards, containers with 25% opacity
@@ -74,52 +75,52 @@ class AppTheme {
         fontSize: 32,
         fontWeight: FontWeight.bold,
         letterSpacing: -0.5,
-        color: kTextGreen,
+        color: kTextBrown,
       ), // App name in header
       
       displayMedium: GoogleFonts.inter(
         fontSize: 28,
         fontWeight: FontWeight.bold,
         letterSpacing: -0.5,
-        color: kTextGreen,
+        color: kTextBrown,
       ), // Screen titles
       
       displaySmall: GoogleFonts.inter(
         fontSize: 24,
         fontWeight: FontWeight.bold,
-        color: kTextGreen,
+        color: kTextBrown,
       ), // Section headers
 
       // Headlines
       headlineLarge: GoogleFonts.inter(
         fontSize: 20,
         fontWeight: FontWeight.w600,
-        color: kTextGreen,
+        color: kTextBrown,
       ), // Card titles
       
       headlineMedium: GoogleFonts.inter(
         fontSize: 18,
         fontWeight: FontWeight.w600,
-        color: kTextGreen,
+        color: kTextBrown,
       ), // Important subsections
       
       headlineSmall: GoogleFonts.inter(
         fontSize: 16,
         fontWeight: FontWeight.w600,
-        color: kTextGreen,
+        color: kTextBrown,
       ), // Dialog titles
 
       // Body Text
       bodyLarge: GoogleFonts.inter(
         fontSize: 16,
         fontWeight: FontWeight.normal,
-        color: kTextGreen,
+        color: kTextBrown,
       ), // Primary body text
       
       bodyMedium: GoogleFonts.inter(
         fontSize: 14,
         fontWeight: FontWeight.normal,
-        color: kTextGreen,
+        color: kTextBrown,
       ), // Secondary body text
       
       bodySmall: GoogleFonts.inter(
@@ -132,13 +133,13 @@ class AppTheme {
       labelLarge: GoogleFonts.inter(
         fontSize: 14,
         fontWeight: FontWeight.w500,
-        color: kTextGreen,
+        color: kTextBrown,
       ), // Button text
       
       labelMedium: GoogleFonts.inter(
         fontSize: 12,
         fontWeight: FontWeight.w500,
-        color: kTextGreen,
+        color: kTextBrown,
       ), // Small button text
       
       labelSmall: GoogleFonts.inter(
@@ -160,6 +161,8 @@ class AppTheme {
         primary: kPrimaryGreen,
         secondary: kAccentBrown,
         error: kErrorRed,
+        onBackground: kTextBrown,  // Setting primary text color for background
+        onSurface: kTextBrown,     // Setting primary text color for surface
       ),
       
       // Background Colors
@@ -221,9 +224,9 @@ class AppTheme {
         backgroundColor: kBackgroundColor,
         elevation: 0,
         centerTitle: true,
-        iconTheme: IconThemeData(color: kTextGreen),
+        iconTheme: IconThemeData(color: kTextBrown),
         titleTextStyle: TextStyle(
-          color: kTextGreen,
+          color: kTextBrown,
           fontSize: 20,
           fontWeight: FontWeight.w600,
         ),

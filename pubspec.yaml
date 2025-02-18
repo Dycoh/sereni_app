@@ -61,8 +61,9 @@ dev_dependencies:
 
 flutter:
   assets:
-    - assets/gifs/sereni_chatbot_animation.gif
-    - assets/gifs/gender_identity_robot.gif
+    - assets/gifs/welcome_sereni_bot.gif
+    - assets/gifs/onboarding_name_bot.gif
+    - assets/gifs/onboarding_gender_bot.gif
     - assets/gifs/onboarding_age_bot.gif
     - assets/logos/sereni_logo.png
   

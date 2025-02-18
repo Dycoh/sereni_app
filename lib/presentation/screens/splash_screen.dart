@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../app/theme/theme.dart';
 import 'onboarding_screen.dart';
-import 'login_screen.dart';
+import 'signin_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -72,7 +72,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
   void _navigateToLogin() {
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      MaterialPageRoute(builder: (_) => const SignInScreen()),
     );
   }
 

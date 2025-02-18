@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../presentation/screens/splash_screen.dart';  // Make sure this path is correct
 import 'theme/theme.dart';  // Make sure this path is correct
+import 'routes.dart';
 
 class SereniApp extends StatelessWidget {
   const SereniApp({super.key});
