@@ -71,5 +71,6 @@ flutter:
     - assets/gifs/onboarding_age_bot.gif
     - assets/gifs/sign_in.gif
     - assets/gifs/sign_up.gif
+    - assets/images/placeholder_profile.png
   
   uses-material-design: true

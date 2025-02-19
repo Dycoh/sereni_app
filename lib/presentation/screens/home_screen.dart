@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:sereni_app/presentation/screens/chat_screen.dart';
 import 'package:sereni_app/presentation/screens/insights_screen.dart';
@@ -12,18 +10,73 @@ import '../widgets/mood_selector.dart';
 import '../widgets/journal_streak_chart.dart';
 import '../widgets/insights_carousel.dart';
 
-
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
+  late AnimationController _colorController;
+  late Animation<Color?> _colorAnimation;
+  late AnimationController _fillController;
+  late Animation<double> _fillAnimation;
+  
+  // Typing animation text
+  late AnimationController _typeController;
+  late Animation<int> _typeAnimation;
+  final String _subtitle = "Your daily dose of AI-powered mental wellness insights";
+
+  @override
+  void initState() {
+    super.initState();
+    _colorController = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
+    )..repeat(reverse: true);
+    
+    _colorAnimation = ColorTween(
+      begin: AppTheme.kAccentBrown,
+      end: AppTheme.kPrimaryGreen,
+    ).animate(_colorController);
+
+    _fillController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+
+    _fillAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(_fillController);
+
+    _typeController = AnimationController(
+      duration: Duration(milliseconds: _subtitle.length * 100),
+      vsync: this,
+    )..repeat(reverse: true);
+
+    _typeAnimation = IntTween(
+      begin: 0,
+      end: _subtitle.length,
+    ).animate(_typeController);
+  }
+
+  @override
+  void dispose() {
+    _colorController.dispose();
+    _fillController.dispose();
+    _typeController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final horizontalPadding = screenWidth < 600 ? 0.05 : 0.1;
+    final isSmallScreen = screenWidth < 600;
 
-    // Placeholder data
-    final psychScore = 85;
-    final currentMood = '😊';
+    // Placeholder data for widgets
     final insights = [
       const InsightCard(
         title: 'Mood Analysis',
@@ -53,10 +106,10 @@ class HomeScreen extends StatelessWidget {
             ),
             child: AppBar(
               leading: Padding(
-                padding: const EdgeInsets.all(8.0),
+                padding: const EdgeInsets.all(6.0),
                 child: Image.asset(
                   'assets/logos/sereni_logo.png',
-                  height: 30,
+                  height: 35,
                 ),
               ),
               actions: [
@@ -122,91 +175,30 @@ class HomeScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Left Column - PsychScore
-                  Expanded(
+                  const Expanded(
                     flex: 1,
-                    child: Container(
-                      height: 200,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: AppTheme.kPrimaryGreen.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          CustomPaint(
-                            size: const Size(150, 150),
-                            painter: DottedCirclePainter(),
-                          ),
-                          PsychScoreChart(score: psychScore),
-                        ],
-                      ),
+                    child: SizedBox(
+                      height: 224,
+                      child: PsychScoreChart(score: 85),
                     ),
                   ),
                   const SizedBox(width: AppTheme.kSpacing2x),
-                  // Right Column - Mood and Journal
+                  // Right Column - Mood and Journal with Golden Ratio
                   Expanded(
                     flex: 1,
                     child: Column(
                       children: [
-                        // Mood Container
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.green.shade50,
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    'Mood',
-                                    style: Theme.of(context).textTheme.titleMedium,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  const Icon(Icons.emoji_emotions_outlined),
-                                ],
-                              ),
-                              MoodSelector(
-                                currentMood: currentMood,
-                                onMoodSelected: (mood) {
-                                  // Handle mood selection
-                                },
-                              ),
-                            ],
-                          ),
+                        // Mood Container (smaller)
+                        const SizedBox(
+                          height: 64, // Approximately 1/φ of total height
+                          child: MoodSelector(),
                         ),
                         const SizedBox(height: AppTheme.kSpacing2x),
-                        // Journal Streak Container
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: AppTheme.kAccentBrown.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    'Journal Streak',
-                                    style: Theme.of(context).textTheme.titleMedium,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  const Icon(Icons.edit_calendar),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              SizedBox(
-                                height: 60,
-                                child: JournalStreakChart(
-                                  weeklyEntries: [60, 80, 40, 90, 70],
-                                ),
-                              ),
-                            ],
+                        // Journal Streak Container (larger)
+                        const SizedBox(
+                          height: 144, // Remaining space
+                          child: JournalStreakChart(
+                            weeklyEntries: [60, 80, 40, 90, 70],
                           ),
                         ),
                       ],
@@ -214,52 +206,47 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: AppTheme.kSpacing2x),
-              // AI Insights Section
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.green.shade50,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          'AI Insights',
-                          style: Theme.of(context).textTheme.titleLarge,
+              const SizedBox(height: AppTheme.kSpacing3x),
+              
+              // AI Insights Header
+              Text(
+                'AI Insights ✨',
+                style: Theme.of(context).textTheme.displayLarge,
+              ),
+              const SizedBox(height: AppTheme.kSpacing),
+              // Animated subtitle
+              AnimatedBuilder(
+                animation: _typeAnimation,
+                builder: (context, child) {
+                  return Text(
+                    _subtitle.substring(0, _typeAnimation.value),
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: AppTheme.kGray600,
                         ),
-                        const SizedBox(width: 8),
-                        const Icon(Icons.psychology),
-                      ],
-                    ),
-                    const SizedBox(height: AppTheme.kSpacing2x),
-                    SizedBox(
-                      height: 200,
-                      child: InsightsCarousel(
-                        insights: insights,
-                        autoPlay: true,
-                        animationDuration: const Duration(milliseconds: 500),
-                      ),
-                    ),
-                  ],
+                  );
+                },
+              ),
+              const SizedBox(height: AppTheme.kSpacing2x),
+              
+              // AI Insights Section
+              SizedBox(
+                height: 200,
+                child: InsightsCarousel(
+                  insights: insights,
+                  autoPlay: true,
+                  animationDuration: const Duration(milliseconds: 500),
                 ),
               ),
             ],
           ),
         ),
       ),
-      floatingActionButton: Container(
-        margin: const EdgeInsets.only(bottom: 15),
-        child: TweenAnimationBuilder(
-          tween: ColorTween(
-            begin: AppTheme.kAccentBrown,
-            end: AppTheme.kAccentBrown.withRed(150),
-          ),
-          duration: const Duration(seconds: 2),
-          builder: (context, color, child) {
+      floatingActionButton: MouseRegion(
+        onEnter: (_) => _fillController.forward(),
+        onExit: (_) => _fillController.reverse(),
+        child: AnimatedBuilder(
+          animation: Listenable.merge([_colorAnimation, _fillAnimation]),
+          builder: (context, child) {
             return Container(
               height: 70,
               width: 70,
@@ -267,11 +254,12 @@ class HomeScreen extends StatelessWidget {
                 shape: BoxShape.circle,
                 gradient: LinearGradient(
                   colors: [
-                    AppTheme.kAccentBrown,
-                    AppTheme.kAccentBrown.withRed(150),
+                    _colorAnimation.value ?? AppTheme.kAccentBrown,
+                    AppTheme.kPrimaryGreen,
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
+                  stops: [0.0, _fillAnimation.value],
                 ),
               ),
               child: FloatingActionButton(
@@ -279,7 +267,7 @@ class HomeScreen extends StatelessWidget {
                   _showActionButtons(context);
                 },
                 backgroundColor: Colors.transparent,
-                elevation: 4,
+                elevation: 0,
                 child: const Text(
                   'AI',
                   style: TextStyle(
@@ -294,12 +282,12 @@ class HomeScreen extends StatelessWidget {
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: Container(
+      bottomNavigationBar: isSmallScreen ? Container(
         decoration: BoxDecoration(
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withAlpha(26),
               blurRadius: 10,
             ),
           ],
@@ -319,7 +307,7 @@ class HomeScreen extends StatelessWidget {
                 vertical: AppTheme.kSpacing,
               ),
               duration: const Duration(milliseconds: 400),
-              tabBackgroundColor: AppTheme.kPrimaryGreen.withOpacity(0.1),
+              tabBackgroundColor: AppTheme.kPrimaryGreen.withAlpha(26),
               color: AppTheme.kGray400,
               tabs: const [
                 GButton(
@@ -368,7 +356,7 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
         ),
-      ),
+      ) : null,
     );
   }
 
@@ -478,35 +466,4 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
-}
-
-// Custom painter for dotted circle
-// Custom painter for dotted circle
-class DottedCirclePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final Paint paint = Paint()
-      ..color = Colors.white.withOpacity(0.5)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0;
-
-    final double centerX = size.width / 2;
-    final double centerY = size.height / 2;
-    final double radius = size.width / 2 - 10;
-
-    // Draw dotted circle
-    final Path path = Path();
-    for (double i = 0; i < 360; i += 5) {
-      final double x1 = centerX + radius * cos(i * pi / 180);
-      final double y1 = centerY + radius * sin(i * pi / 180);
-      final double x2 = centerX + radius * cos((i + 2) * pi / 180);
-      final double y2 = centerY + radius * sin((i + 2) * pi / 180);
-      path.moveTo(x1, y1);
-      path.lineTo(x2, y2);
-    }
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }

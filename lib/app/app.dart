@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+// import 'package:flutter_bloc/flutter_bloc.dart';
+// import 'package:shared_preferences/shared_preferences.dart';
 import '../presentation/screens/splash_screen.dart';
 import '../presentation/screens/welcome_screen.dart';
+import '../presentation/screens/home_screen.dart';
+
 import 'theme/theme.dart';
 import 'routes.dart';
 
@@ -17,6 +19,11 @@ class _SereniAppState extends State<SereniApp> {
   String? _initialRoute;
   bool _isInitialized = false;
 
+  /// Temporary debug override for testing a specific screen.
+  /// Set this to a route like `RouteManager.home` when testing.
+  /// Change back to `null` to restore normal onboarding behavior.
+  static const String? debugOverrideRoute = RouteManager.home; // Change this for temporary testing
+
   @override
   void initState() {
     super.initState();
@@ -25,13 +32,13 @@ class _SereniAppState extends State<SereniApp> {
 
   Future<void> _initializeApp() async {
     try {
-      // First determine the initial route
+      // Determine the initial route dynamically
       final initialRoute = await RouteManager.determineInitialRoute();
       debugPrint('Initial route determined: $initialRoute');
-      
-      // Wait for 5 seconds regardless of initialization status
+
+      // Simulate a splash delay (5 seconds)
       await Future.delayed(const Duration(seconds: 5));
-      
+
       if (mounted) {
         setState(() {
           _initialRoute = initialRoute;
@@ -40,10 +47,10 @@ class _SereniAppState extends State<SereniApp> {
       }
     } catch (e) {
       debugPrint('Error initializing app: $e');
-      
+
       // Still wait for the full 5 seconds even if there's an error
       await Future.delayed(const Duration(seconds: 5));
-      
+
       if (mounted) {
         setState(() {
           _initialRoute = RouteManager.welcome;
@@ -67,8 +74,8 @@ class _SereniAppState extends State<SereniApp> {
       );
     }
 
-    // Ensure we have a valid route to start with
-    final String initialRoute = _initialRoute ?? RouteManager.welcome;
+    /// If `debugOverrideRoute` is set, use it instead of the normal flow.
+    final String initialRoute = debugOverrideRoute ?? _initialRoute ?? RouteManager.welcome;
 
     return MaterialApp(
       title: 'Sereni',
@@ -79,11 +86,13 @@ class _SereniAppState extends State<SereniApp> {
     );
   }
 
+  /// Builds the initial screen based on the determined route.
   Widget _buildInitialScreen(String route) {
     switch (route) {
       case RouteManager.welcome:
         return const WelcomeScreen();
-      // You can add other cases here if needed
+      case RouteManager.home:
+        return const HomeScreen(); // Example: Add other screens as needed
       default:
         return const WelcomeScreen();
     }
