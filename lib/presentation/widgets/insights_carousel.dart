@@ -1,44 +1,81 @@
-// lib/widgets/insights/insights_carousel.dart
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:carousel_slider/carousel_slider.dart';
 import '../../app/theme/theme.dart';
 
-class InsightsCarousel extends StatelessWidget {
+class InsightsCarousel extends StatefulWidget {
   final List<InsightCard> insights;
-
+  final bool autoPlay;
+  final Duration animationDuration;
+  
   const InsightsCarousel({
     super.key,
     required this.insights,
+    this.autoPlay = true,
+    this.animationDuration = const Duration(milliseconds: 500),
   });
 
   @override
+  State<InsightsCarousel> createState() => _InsightsCarouselState();
+}
+
+class _InsightsCarouselState extends State<InsightsCarousel> {
+  late PageController _pageController;
+  int _currentPage = 0;
+  Timer? _autoPlayTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(viewportFraction: 0.9);
+    if (widget.autoPlay) {
+      _startAutoPlay();
+    }
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    _autoPlayTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startAutoPlay() {
+    _autoPlayTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
+      if (_currentPage < widget.insights.length - 1) {
+        _currentPage++;
+      } else {
+        _currentPage = 0;
+      }
+      _pageController.animateToPage(
+        _currentPage,
+        duration: widget.animationDuration,
+        curve: Curves.easeInOut,
+      );
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(
-              'AI Insights',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            const SizedBox(width: AppTheme.kSpacing),
-            const Text('🥰', style: TextStyle(fontSize: 24)),
-          ],
-        ),
-        const SizedBox(height: AppTheme.kSpacing2x),
-        CarouselSlider(
-          options: CarouselOptions(
-            height: 200,
-            viewportFraction: 0.9,
-            enableInfiniteScroll: false,
-            scrollDirection: Axis.vertical,
-          ),
-          items: insights,
-        ),
-      ],
+    return SizedBox(
+      height: 200,
+      child: PageView.builder(
+        scrollDirection: Axis.vertical,
+        controller: _pageController,
+        itemCount: widget.insights.length,
+        onPageChanged: (index) {
+          setState(() {
+            _currentPage = index;
+          });
+        },
+        itemBuilder: (context, index) {
+          return AnimatedOpacity(
+            duration: widget.animationDuration,
+            opacity: _currentPage == index ? 1.0 : 0.5,
+            child: widget.insights[index],
+          );
+        },
+      ),
     );
   }
 }

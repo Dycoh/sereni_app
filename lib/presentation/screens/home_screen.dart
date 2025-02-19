@@ -1,14 +1,17 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
+import 'package:sereni_app/presentation/screens/chat_screen.dart';
+import 'package:sereni_app/presentation/screens/insights_screen.dart';
+import 'package:sereni_app/presentation/screens/journal_screen.dart';
+import 'package:sereni_app/presentation/screens/profile_screen.dart';
 import '../../app/theme/theme.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import '../widgets/psych_score_chart.dart';
 import '../widgets/mood_selector.dart';
 import '../widgets/journal_streak_chart.dart';
 import '../widgets/insights_carousel.dart';
-import '../screens/journal_screen.dart';
-import '../screens/chat_screen.dart';
-import '../screens/insights_screen.dart';
-import '../screens/profile_screen.dart';
+
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -21,7 +24,6 @@ class HomeScreen extends StatelessWidget {
     // Placeholder data
     final psychScore = 85;
     final currentMood = '😊';
-    final weeklyEntries = [60, 80, 40, 90, 70];
     final insights = [
       const InsightCard(
         title: 'Mood Analysis',
@@ -50,8 +52,8 @@ class HomeScreen extends StatelessWidget {
               horizontal: MediaQuery.of(context).size.width * horizontalPadding,
             ),
             child: AppBar(
-              title: Align(
-                alignment: Alignment.centerLeft,
+              leading: Padding(
+                padding: const EdgeInsets.all(8.0),
                 child: Image.asset(
                   'assets/logos/sereni_logo.png',
                   height: 30,
@@ -115,84 +117,131 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: AppTheme.kSpacing3x),
               
-              // Widgets Grid Layout
-              Container(
-                width: double.infinity,
-                child: Column(
-                  children: [
-                    // First Row: PsychScore and Mood
-                    Row(
+              // Main Content Grid
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Left Column - PsychScore
+                  Expanded(
+                    flex: 1,
+                    child: Container(
+                      height: 200,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppTheme.kPrimaryGreen.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          CustomPaint(
+                            size: const Size(150, 150),
+                            painter: DottedCirclePainter(),
+                          ),
+                          PsychScoreChart(score: psychScore),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AppTheme.kSpacing2x),
+                  // Right Column - Mood and Journal
+                  Expanded(
+                    flex: 1,
+                    child: Column(
                       children: [
-                        // PsychScore Widget
-                        Expanded(
-                          child: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: AppTheme.kPrimaryGreen,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: PsychScoreChart(score: psychScore),
+                        // Mood Container
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.green.shade50,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    'Mood',
+                                    style: Theme.of(context).textTheme.titleMedium,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Icon(Icons.emoji_emotions_outlined),
+                                ],
+                              ),
+                              MoodSelector(
+                                currentMood: currentMood,
+                                onMoodSelected: (mood) {
+                                  // Handle mood selection
+                                },
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(width: AppTheme.kSpacing2x),
-                        // Mood Widget
-                        Expanded(
-                          child: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.green.shade50,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text('Mood'),
-                                MoodSelector(
-                                  currentMood: currentMood,
-                                  onMoodSelected: (mood) {
-                                    // Handle mood selection
-                                  },
+                        const SizedBox(height: AppTheme.kSpacing2x),
+                        // Journal Streak Container
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: AppTheme.kAccentBrown.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    'Journal Streak',
+                                    style: Theme.of(context).textTheme.titleMedium,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Icon(Icons.edit_calendar),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              SizedBox(
+                                height: 60,
+                                child: JournalStreakChart(
+                                  weeklyEntries: [60, 80, 40, 90, 70],
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: AppTheme.kSpacing2x),
-                    // Second Row: Journal Streak
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AppTheme.kAccentBrown,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: JournalStreakChart(weeklyEntries: weeklyEntries),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppTheme.kSpacing2x),
+              // AI Insights Section
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.green.shade50,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          'AI Insights',
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                        const SizedBox(width: 8),
+                        const Icon(Icons.psychology),
+                      ],
                     ),
                     const SizedBox(height: AppTheme.kSpacing2x),
-                    // Third Row: AI Insights
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.green.shade50,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Text(
-                                'AI Insights',
-                                style: Theme.of(context).textTheme.titleLarge,
-                              ),
-                              const SizedBox(width: 8),
-                              const Icon(Icons.psychology),
-                            ],
-                          ),
-                          const SizedBox(height: AppTheme.kSpacing),
-                          InsightsCarousel(insights: insights),
-                        ],
+                    SizedBox(
+                      height: 200,
+                      child: InsightsCarousel(
+                        insights: insights,
+                        autoPlay: true,
+                        animationDuration: const Duration(milliseconds: 500),
                       ),
                     ),
                   ],
@@ -345,7 +394,6 @@ class HomeScreen extends StatelessWidget {
             Expanded(
               child: ElevatedButton(
                 onPressed: () {
-                  // Navigate to Journal
                   Navigator.pop(context);
                   Navigator.push(
                     context,
@@ -386,7 +434,6 @@ class HomeScreen extends StatelessWidget {
             Expanded(
               child: ElevatedButton(
                 onPressed: () {
-                  // Navigate to Chat
                   Navigator.pop(context);
                   Navigator.push(
                     context,
@@ -431,4 +478,35 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+// Custom painter for dotted circle
+// Custom painter for dotted circle
+class DottedCirclePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Paint paint = Paint()
+      ..color = Colors.white.withOpacity(0.5)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.0;
+
+    final double centerX = size.width / 2;
+    final double centerY = size.height / 2;
+    final double radius = size.width / 2 - 10;
+
+    // Draw dotted circle
+    final Path path = Path();
+    for (double i = 0; i < 360; i += 5) {
+      final double x1 = centerX + radius * cos(i * pi / 180);
+      final double y1 = centerY + radius * sin(i * pi / 180);
+      final double x2 = centerX + radius * cos((i + 2) * pi / 180);
+      final double y2 = centerY + radius * sin((i + 2) * pi / 180);
+      path.moveTo(x1, y1);
+      path.lineTo(x2, y2);
+    }
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }

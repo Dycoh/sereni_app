@@ -1,4 +1,3 @@
-// lib/widgets/psych_score/psych_score_chart.dart
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import '../../app/theme/theme.dart';
@@ -6,11 +5,11 @@ import '../../app/theme/theme.dart';
 class PsychScoreChart extends StatelessWidget {
   final int score;
   final double size;
-
+  
   const PsychScoreChart({
     super.key,
     required this.score,
-    this.size = 120,
+    this.size = 150,
   });
 
   @override
@@ -18,35 +17,45 @@ class PsychScoreChart extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppTheme.kSpacing2x),
       decoration: BoxDecoration(
-        color: AppTheme.kPrimaryGreen,
-        borderRadius: BorderRadius.circular(AppTheme.kRadiusLarge),
+        color: AppTheme.kPrimaryGreen.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(16),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+      child: Stack(
+        alignment: Alignment.center,
         children: [
-          Text(
-            'Psych Score',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.white,
-                ),
-          ),
-          const SizedBox(height: AppTheme.kSpacing),
+          // Dotted circle background
           CustomPaint(
             size: Size(size, size),
+            painter: DottedCirclePainter(),
+          ),
+          // Main score circle
+          CustomPaint(
+            size: Size(size * 0.8, size * 0.8),
             painter: _CircularScoreIndicator(
               score: score,
-              backgroundColor: Colors.white.withOpacity(0.3),
-              foregroundColor: Colors.white,
+              backgroundColor: AppTheme.kPrimaryGreen.withOpacity(0.3),
+              foregroundColor: AppTheme.kPrimaryGreen,
             ),
-            child: Center(
-              child: Text(
+          ),
+          // Score text
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
                 '$score',
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  color: AppTheme.kPrimaryGreen,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
+              const SizedBox(height: AppTheme.kSpacing),
+              Text(
+                'Psych Score',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppTheme.kPrimaryGreen,
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -76,7 +85,6 @@ class _CircularScoreIndicator extends CustomPainter {
       ..color = backgroundColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth;
-
     canvas.drawCircle(center, radius - strokeWidth / 2, backgroundPaint);
 
     // Score arc
@@ -99,4 +107,33 @@ class _CircularScoreIndicator extends CustomPainter {
   @override
   bool shouldRepaint(_CircularScoreIndicator oldDelegate) =>
       oldDelegate.score != score;
+}
+
+class DottedCirclePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Paint paint = Paint()
+      ..color = AppTheme.kPrimaryGreen.withOpacity(0.2)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.0;
+
+    final double centerX = size.width / 2;
+    final double centerY = size.height / 2;
+    final double radius = size.width / 2 - 10;
+
+    // Draw dotted circle
+    final Path path = Path();
+    for (double i = 0; i < 360; i += 5) {
+      final double x1 = centerX + radius * math.cos(i * math.pi / 180);
+      final double y1 = centerY + radius * math.sin(i * math.pi / 180);
+      final double x2 = centerX + radius * math.cos((i + 2) * math.pi / 180);
+      final double y2 = centerY + radius * math.sin((i + 2) * math.pi / 180);
+      path.moveTo(x1, y1);
+      path.lineTo(x2, y2);
+    }
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }
