@@ -221,7 +221,7 @@ class AppTheme {
       
       // App Bar Theme
       appBarTheme: const AppBarTheme(
-        backgroundColor: kBackgroundColor,
+        backgroundColor: Color.fromARGB(10, 253, 253, 238),
         elevation: 0,
         centerTitle: true,
         iconTheme: IconThemeData(color: kTextBrown),
