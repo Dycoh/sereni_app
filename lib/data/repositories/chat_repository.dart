@@ -1,70 +1,98 @@
-// chat_repository.dart
+// lib/data/repositories/chat_repository.dart
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../domain/entities/chat.dart';
 import '../models/chat_model.dart';
-import '../../domain/repositories/base_repository.dart';
+import '../services/ai_service.dart';
 
-class ChatRepository with BaseRepository<Chat> {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+class ChatRepository {
+  final FirebaseFirestore _firestore;
+  final FirebaseAuth _auth;
+  final AIService _aiService;
+
+  ChatRepository({
+    FirebaseFirestore? firestore,
+    FirebaseAuth? auth,
+    AIService? aiService,
+  })  : _firestore = firestore ?? FirebaseFirestore.instance,
+        _auth = auth ?? FirebaseAuth.instance,
+        _aiService = aiService ?? AIService();
 
   CollectionReference<Map<String, dynamic>> get _chatsCollection =>
       _firestore.collection('users').doc(_auth.currentUser?.uid).collection('chats');
 
-  @override
-  Future<Chat?> getById(String id) async {
-    final doc = await _chatsCollection.doc(id).get();
-    if (!doc.exists) return null;
-    return ChatModel.fromMap(doc.data()!).toDomain();
+  DocumentReference<Map<String, dynamic>> get _currentChatDoc =>
+      _chatsCollection.doc('current_chat');
+
+  Future<List<ChatMessage>> getChatHistory() async {
+    try {
+      final docSnapshot = await _currentChatDoc.get();
+      
+      if (!docSnapshot.exists) {
+        // Create a new chat if none exists
+        await _currentChatDoc.set(ChatModel(
+          id: 'current_chat',
+          messages: [],
+          createdAt: DateTime.now(),
+        ).toMap());
+        return [];
+      }
+
+      final chatModel = ChatModel.fromMap(docSnapshot.data()!);
+      return chatModel.messages.map((msg) => msg.toDomain()).toList();
+    } catch (e) {
+      throw Exception('Failed to get chat history: $e');
+    }
   }
 
-  @override
-  Future<List<Chat>> getAll() async {
-    final snapshot = await _chatsCollection.orderBy('timestamp', descending: true).get();
-    return snapshot.docs
-        .map((doc) => ChatModel.fromMap(doc.data()).toDomain())
-        .toList();
+  Future<void> addMessage(ChatMessage message) async {
+    try {
+      final docSnapshot = await _currentChatDoc.get();
+      
+      if (!docSnapshot.exists) {
+        // Create new chat with the message
+        await _currentChatDoc.set(ChatModel(
+          id: 'current_chat',
+          messages: [ChatMessageModel.fromDomain(message)],
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        ).toMap());
+        return;
+      }
+
+      // Add message to existing chat
+      final chatModel = ChatModel.fromMap(docSnapshot.data()!);
+      final updatedMessages = [...chatModel.messages, ChatMessageModel.fromDomain(message)];
+      
+      await _currentChatDoc.update({
+        'messages': updatedMessages.map((msg) => msg.toMap()).toList(),
+        'updatedAt': DateTime.now().toIso8601String(),
+      });
+    } catch (e) {
+      throw Exception('Failed to add message: $e');
+    }
   }
 
-  @override
-  Future<void> create(Chat chat) async {
-    final model = ChatModel.fromDomain(chat);
-    await _chatsCollection.doc(model.id).set(model.toMap());
+  Future<String> generateAIResponse(String userMessage) async {
+    try {
+      // Get AI response using the AI service
+      final response = await _aiService.generateResponse(userMessage);
+      return response;
+    } catch (e) {
+      throw Exception('Failed to generate AI response: $e');
+    }
   }
 
-  @override
-  Future<void> update(Chat chat) async {
-    final model = ChatModel.fromDomain(chat);
-    await _chatsCollection.doc(model.id).update(model.toMap());
-  }
-
-  @override
-  Future<void> delete(String id) async {
-    await _chatsCollection.doc(id).delete();
-  }
-
-  Future<List<Chat>> getChatHistory() async {
-    final snapshot = await _chatsCollection
-        .orderBy('timestamp', descending: true)
-        .limit(50)
-        .get();
-
-    return snapshot.docs
-        .map((doc) => ChatModel.fromMap(doc.data()).toDomain())
-        .toList();
-  }
-
-  Future<Chat> sendMessage(String message) async {
-    final chat = Chat(
-      id: DateTime.now().toIso8601String(),
-      userId: _auth.currentUser?.uid ?? '',
-      message: message,
-      timestamp: DateTime.now(),
-      isAiResponse: false,
-    );
-
-    await create(chat);
-    return chat;
+  Future<void> clearChat() async {
+    try {
+      await _currentChatDoc.set(ChatModel(
+        id: 'current_chat',
+        messages: [],
+        createdAt: DateTime.now(),
+      ).toMap());
+    } catch (e) {
+      throw Exception('Failed to clear chat: $e');
+    }
   }
 }

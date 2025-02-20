@@ -1,58 +1,109 @@
-// data/models/chat_model.dart
+// lib/data/models/chat_model.dart
+
 import '../../domain/entities/chat.dart';
 
-class ChatModel {
+class ChatMessageModel {
   final String id;
-  final String userId;
-  final String message;
+  final String content;
   final DateTime timestamp;
-  final bool isAiResponse;
+  final bool isUser;
 
-  ChatModel({
+  ChatMessageModel({
     required this.id,
-    required this.userId,
-    required this.message,
+    required this.content,
     required this.timestamp,
-    this.isAiResponse = false,
+    required this.isUser,
   });
 
-  factory ChatModel.fromMap(Map<String, dynamic> map) {
-    return ChatModel(
+  factory ChatMessageModel.fromMap(Map<String, dynamic> map) {
+    return ChatMessageModel(
       id: map['id'] as String,
-      userId: map['userId'] as String,
-      message: map['message'] as String,
+      content: map['content'] as String,
       timestamp: DateTime.parse(map['timestamp'] as String),
-      isAiResponse: map['isAiResponse'] as bool? ?? false,
+      isUser: map['isUser'] as bool,
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'userId': userId,
-      'message': message,
+      'content': content,
       'timestamp': timestamp.toIso8601String(),
-      'isAiResponse': isAiResponse,
+      'isUser': isUser,
+    };
+  }
+
+  ChatMessage toDomain() {
+    return ChatMessage(
+      id: id,
+      content: content,
+      timestamp: timestamp,
+      isUser: isUser,
+    );
+  }
+
+  factory ChatMessageModel.fromDomain(ChatMessage message) {
+    return ChatMessageModel(
+      id: message.id,
+      content: message.content,
+      timestamp: message.timestamp,
+      isUser: message.isUser,
+    );
+  }
+}
+
+class ChatModel {
+  final String id;
+  final List<ChatMessageModel> messages;
+  final DateTime createdAt;
+  final DateTime? updatedAt;
+
+  ChatModel({
+    required this.id,
+    required this.messages,
+    required this.createdAt,
+    this.updatedAt,
+  });
+
+  factory ChatModel.fromMap(Map<String, dynamic> map) {
+    return ChatModel(
+      id: map['id'] as String,
+      messages: (map['messages'] as List<dynamic>)
+          .map((msg) => ChatMessageModel.fromMap(msg as Map<String, dynamic>))
+          .toList(),
+      createdAt: DateTime.parse(map['createdAt'] as String),
+      updatedAt: map['updatedAt'] != null
+          ? DateTime.parse(map['updatedAt'] as String)
+          : null,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'messages': messages.map((msg) => msg.toMap()).toList(),
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt?.toIso8601String(),
     };
   }
 
   Chat toDomain() {
     return Chat(
       id: id,
-      userId: userId,
-      message: message,
-      timestamp: timestamp,
-      isAiResponse: isAiResponse,
+      messages: messages.map((msg) => msg.toDomain()).toList(),
+      createdAt: createdAt,
+      updatedAt: updatedAt,
     );
   }
 
   factory ChatModel.fromDomain(Chat chat) {
     return ChatModel(
       id: chat.id,
-      userId: chat.userId,
-      message: chat.message,
-      timestamp: chat.timestamp,
-      isAiResponse: chat.isAiResponse,
+      messages: chat.messages
+          .map((msg) => ChatMessageModel.fromDomain(msg))
+          .toList(),
+      createdAt: chat.createdAt,
+      updatedAt: chat.updatedAt,
     );
   }
 }

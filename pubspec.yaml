@@ -9,6 +9,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  easy_localization: ^3.0.0
+    
 
   # State Management
   flutter_bloc: ^9.0.0
@@ -39,12 +43,13 @@ dependencies:
   path_provider: ^2.1.5
   image_picker: ^1.1.2
   flutter_quill: ^11.0.0
+  flutter_dotenv: ^5.2.1
 
   # AI/ML
   google_generative_ai: ^0.4.6
   
   # Multilingual support 
-  easy_localization: ^3.0.0
+  # easy_localization: ^3.0.0
 
   # PDF & Reports
   pdf: ^3.10.7
@@ -77,6 +82,7 @@ flutter:
     - assets/gifs/sign_up.gif
     - assets/images/placeholder_profile.png
     - lib/core/utils/translations/
+    - .env
 
-    
+
   uses-material-design: true
