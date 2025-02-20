@@ -4,6 +4,7 @@ import 'package:sereni_app/app/theme/theme.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:easy_localization/easy_localization.dart';
+import '../widgets/navigation_widget.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -21,6 +22,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   int _selectedIndex = 3;
   String? _imagePath;
   String selectedAreaCode = '+254';
+  final TextEditingController _currentPasswordController = TextEditingController();
+  final TextEditingController _newPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
 
   final List<String> languages = [
     'English',
@@ -59,12 +63,78 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  void _showChangePasswordDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Change Password', style: Theme.of(context).textTheme.headlineMedium),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildPasswordField(
+                  controller: _currentPasswordController,
+                  label: 'Current Password',
+                ),
+                SizedBox(height: AppTheme.kSpacing2x),
+                _buildPasswordField(
+                  controller: _newPasswordController,
+                  label: 'New Password',
+                ),
+                SizedBox(height: AppTheme.kSpacing2x),
+                _buildPasswordField(
+                  controller: _confirmPasswordController,
+                  label: 'Confirm New Password',
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                // Implement password change logic here
+                Navigator.pop(context);
+              },
+              child: Text('Update Password'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildPasswordField({
+    required TextEditingController controller,
+    required String label,
+  }) {
+    return TextField(
+      controller: controller,
+      obscureText: !isPasswordVisible,
+      decoration: InputDecoration(
+        labelText: label,
+        suffixIcon: IconButton(
+          icon: Icon(
+            isPasswordVisible ? Icons.visibility_off : Icons.visibility,
+            color: AppTheme.kTextBrown,
+          ),
+          onPressed: () => setState(() => isPasswordVisible = !isPasswordVisible),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     
-    return Scaffold(
-      backgroundColor: AppTheme.kBackgroundColor,
+    return CustomScaffold(
+      currentRoute: '/profile',
+      title: 'Profile',
       body: SingleChildScrollView(
         child: SafeArea(
           child: Padding(
@@ -75,7 +145,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Profile Image and Name
+                // Profile Image and Name section remains the same
                 Center(
                   child: Column(
                     children: [
@@ -108,7 +178,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                 Text(
                   'general'.tr(),
-                  style: theme.textTheme.headlineMedium,
+                  style: theme.textTheme.displayMedium,
                 ),
                 SizedBox(height: AppTheme.kSpacing2x),
                 
@@ -158,10 +228,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 
                 Text(
                   'privacySecurity'.tr(),
-                  style: theme.textTheme.headlineMedium,
+                  style: theme.textTheme.displayMedium,
                 ),
                 SizedBox(height: AppTheme.kSpacing2x),
                 
+                // Emergency Contacts section remains the same
                 Text(
                   'emergencyContacts'.tr(),
                   style: theme.textTheme.bodyLarge,
@@ -212,28 +283,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 SizedBox(height: AppTheme.kSpacing2x),
                 
+                // Modified Password section
                 Text(
                   'password'.tr(),
                   style: theme.textTheme.bodyLarge,
                 ),
                 SizedBox(height: AppTheme.kSpacing),
-                Container(
-                  decoration: BoxDecoration(
-                    color: AppTheme.kLightGreenContainer,
-                    borderRadius: BorderRadius.circular(AppTheme.kRadiusMedium),
-                  ),
-                  child: TextField(
-                    obscureText: !isPasswordVisible,
-                    decoration: InputDecoration(
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.all(AppTheme.kSpacing2x),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          isPasswordVisible ? Icons.visibility_off : Icons.visibility,
-                          color: AppTheme.kTextBrown,
-                        ),
-                        onPressed: () => setState(() => isPasswordVisible = !isPasswordVisible),
-                      ),
+                GestureDetector(
+                  onTap: _showChangePasswordDialog,
+                  child: Container(
+                    padding: EdgeInsets.all(AppTheme.kSpacing2x),
+                    decoration: BoxDecoration(
+                      color: AppTheme.kLightGreenContainer,
+                      borderRadius: BorderRadius.circular(AppTheme.kRadiusMedium),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Change Password', style: theme.textTheme.bodyLarge),
+                        Icon(Icons.arrow_forward_ios, color: AppTheme.kTextBrown),
+                      ],
                     ),
                   ),
                 ),
@@ -263,53 +332,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              blurRadius: 20,
-              color: Colors.black.withOpacity(.1),
-            )
-          ],
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: AppTheme.kSpacing2x,
-              vertical: AppTheme.kSpacing,
-            ),
-            child: GNav(
-              rippleColor: AppTheme.kLightGreenContainer,
-              hoverColor: AppTheme.kLightGreenContainer,
-              gap: 8,
-              activeColor: AppTheme.kPrimaryGreen,
-              iconSize: 24,
-              padding: EdgeInsets.symmetric(
-                horizontal: AppTheme.kSpacing2x,
-                vertical: AppTheme.kSpacing,
-              ),
-              duration: Duration(milliseconds: 400),
-              tabBackgroundColor: AppTheme.kLightGreenContainer,
-              color: AppTheme.kGray600,
-              tabs: [
-                GButton(icon: Icons.home, text: 'home'.tr()),
-                GButton(icon: Icons.favorite, text: 'likes'.tr()),
-                GButton(icon: Icons.search, text: 'search'.tr()),
-                GButton(icon: Icons.person, text: 'profile'.tr()),
-              ],
-              selectedIndex: _selectedIndex,
-              onTabChange: (index) {
-                setState(() => _selectedIndex = index);
-              },
-            ),
-          ),
-        ),
-      ),
     );
   }
 
   String _getLocaleCode(String language) {
+    // Language code mapping remains the same
     switch (language.toLowerCase()) {
       case 'english': return 'en';
       case 'spanish': return 'es';
@@ -331,17 +358,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required Widget trailing,
   }) {
     return Container(
-      padding: EdgeInsets.all(AppTheme.kSpacing2x),
+      padding: EdgeInsets.symmetric(
+        horizontal: AppTheme.kSpacing2x,
+        vertical: AppTheme.kSpacing, // Reduced height
+      ),
       decoration: BoxDecoration(
-        color: AppTheme.kLightGreenContainer,
-        borderRadius: BorderRadius.circular(AppTheme.kRadiusMedium),
+        color: AppTheme.kLightGreenContainer.withOpacity(0.3), // Adjusted opacity
+        borderRadius: BorderRadius.circular(50.0), // Pill shape
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Row(
             children: [
-              Icon(icon, color: AppTheme.kTextBrown),
+              Icon(icon, color: AppTheme.kTextBrown, size: 20), // Slightly smaller icon
               SizedBox(width: AppTheme.kSpacing2x),
               Text(title),
             ],

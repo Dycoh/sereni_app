@@ -24,7 +24,7 @@ class _SereniAppState extends State {
   /// Temporary debug override for testing a specific screen.
   /// Set this to a route like `RouteManager.home` when testing.
   /// Change back to `null` to restore normal onboarding behavior.
-  static const String debugOverrideRoute = RouteManager.welcome; // Change this for temporary testing
+  static const String debugOverrideRoute = RouteManager.home; // Change this for temporary testing
 
   @override
   void initState() {
