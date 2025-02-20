@@ -43,6 +43,9 @@ dependencies:
   # AI/ML
   google_generative_ai: ^0.4.6
   
+  # Multilingual support 
+  easy_localization: ^3.0.0
+
   # PDF & Reports
   pdf: ^3.10.7
   printing: ^5.11.1
@@ -73,5 +76,7 @@ flutter:
     - assets/gifs/sign_in.gif
     - assets/gifs/sign_up.gif
     - assets/images/placeholder_profile.png
-  
+    - lib/core/utils/translations/
+
+    
   uses-material-design: true

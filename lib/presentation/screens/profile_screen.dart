@@ -1,7 +1,9 @@
-// profile_screen.dart
 import 'package:flutter/material.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:sereni_app/app/theme/theme.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -16,7 +18,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String selectedLanguage = 'English';
   bool isPasswordVisible = false;
   String emergencyContact = '';
-  int _selectedIndex = 3; // Assuming Profile is the last tab
+  int _selectedIndex = 3;
+  String? _imagePath;
+  String selectedAreaCode = '+254';
 
   final List<String> languages = [
     'English',
@@ -31,201 +35,232 @@ class _ProfileScreenState extends State<ProfileScreen> {
     'Japanese'
   ];
 
+  final List<String> areaCodes = [
+    '+254',
+    '+1',
+    '+44',
+    '+86',
+    '+91',
+    '+81',
+    '+55',
+    '+7',
+    '+33',
+    '+49'
+  ];
+
+  Future<void> _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    
+    if (image != null) {
+      setState(() {
+        _imagePath = image.path;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     
     return Scaffold(
       backgroundColor: AppTheme.kBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: AppTheme.kBackgroundColor,
-        elevation: 0,
-        title: Row(
-          children: [
-            CircleAvatar(
-              backgroundColor: AppTheme.kLightGreenContainer,
-              child: Text(
-                'P',
-                style: theme.textTheme.titleMedium,
-              ),
+      body: SingleChildScrollView(
+        child: SafeArea(
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: MediaQuery.of(context).size.width * 0.1,
+              vertical: AppTheme.kSpacing2x,
             ),
-            SizedBox(width: AppTheme.kSpacing2x),
-            Column(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Peter',
-                  style: theme.textTheme.bodyLarge,
+                // Profile Image and Name
+                Center(
+                  child: Column(
+                    children: [
+                      GestureDetector(
+                        onTap: _pickImage,
+                        child: CircleAvatar(
+                          radius: 50,
+                          backgroundColor: AppTheme.kLightGreenContainer,
+                          backgroundImage: _imagePath != null
+                              ? FileImage(File(_imagePath!))
+                              : null,
+                          child: _imagePath == null
+                              ? Icon(Icons.person, size: 50, color: AppTheme.kTextBrown)
+                              : null,
+                        ),
+                      ),
+                      SizedBox(height: AppTheme.kSpacing2x),
+                      Text(
+                        'Peter',
+                        style: theme.textTheme.headlineMedium,
+                      ),
+                      Text(
+                        'Sconl',
+                        style: theme.textTheme.bodyLarge,
+                      ),
+                    ],
+                  ),
                 ),
+                SizedBox(height: AppTheme.kSpacing3x),
+
                 Text(
-                  'Sconl',
+                  'general'.tr(),
                   style: theme.textTheme.headlineMedium,
                 ),
-              ],
-            ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.menu, color: AppTheme.kTextBrown),
-            onPressed: () {},
-          ),
-        ],
-      ),
-      body: Padding(
-        padding: EdgeInsets.all(AppTheme.kSpacing2x),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'General',
-              style: theme.textTheme.headlineMedium,
-            ),
-            SizedBox(height: AppTheme.kSpacing2x),
-            
-            // Notifications Toggle
-            _buildSettingContainer(
-              icon: Icons.notifications_none,
-              title: 'notifications',
-              trailing: Switch(
-                value: notificationsEnabled,
-                onChanged: (value) => setState(() => notificationsEnabled = value),
-                activeColor: AppTheme.kAccentBrown,
-              ),
-            ),
-            SizedBox(height: AppTheme.kSpacing2x),
-            
-            // Dark Mode Toggle
-            _buildSettingContainer(
-              icon: Icons.dark_mode_outlined,
-              title: 'Dark mode',
-              trailing: Switch(
-                value: darkModeEnabled,
-                onChanged: (value) => setState(() => darkModeEnabled = value),
-                activeColor: AppTheme.kAccentBrown,
-              ),
-            ),
-            SizedBox(height: AppTheme.kSpacing2x),
-            
-            // Language Dropdown
-            _buildSettingContainer(
-              icon: Icons.language,
-              title: 'Language',
-              trailing: DropdownButton<String>(
-                value: selectedLanguage,
-                onChanged: (String? newValue) {
-                  if (newValue != null) {
-                    setState(() => selectedLanguage = newValue);
-                  }
-                },
-                items: languages.map<DropdownMenuItem<String>>((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                }).toList(),
-                underline: Container(),
-              ),
-            ),
-            SizedBox(height: AppTheme.kSpacing3x),
-            
-            Text(
-              'Privacy & Security',
-              style: theme.textTheme.headlineMedium,
-            ),
-            SizedBox(height: AppTheme.kSpacing2x),
-            
-            // Emergency Contact
-            Text(
-              'Emergency contacts',
-              style: theme.textTheme.bodyLarge,
-            ),
-            SizedBox(height: AppTheme.kSpacing),
-            Row(
-              children: [
+                SizedBox(height: AppTheme.kSpacing2x),
+                
+                _buildSettingContainer(
+                  icon: Icons.notifications_none,
+                  title: 'notifications'.tr(),
+                  trailing: Switch(
+                    value: notificationsEnabled,
+                    onChanged: (value) => setState(() => notificationsEnabled = value),
+                    activeColor: AppTheme.kAccentBrown,
+                  ),
+                ),
+                SizedBox(height: AppTheme.kSpacing2x),
+                
+                _buildSettingContainer(
+                  icon: Icons.dark_mode_outlined,
+                  title: 'darkMode'.tr(),
+                  trailing: Switch(
+                    value: darkModeEnabled,
+                    onChanged: (value) => setState(() => darkModeEnabled = value),
+                    activeColor: AppTheme.kAccentBrown,
+                  ),
+                ),
+                SizedBox(height: AppTheme.kSpacing2x),
+                
+                _buildSettingContainer(
+                  icon: Icons.language,
+                  title: 'language'.tr(),
+                  trailing: DropdownButton<String>(
+                    value: selectedLanguage,
+                    onChanged: (String? newValue) {
+                      if (newValue != null) {
+                        setState(() => selectedLanguage = newValue);
+                        context.setLocale(Locale(_getLocaleCode(newValue)));
+                      }
+                    },
+                    items: languages.map<DropdownMenuItem<String>>((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
+                    underline: Container(),
+                  ),
+                ),
+                SizedBox(height: AppTheme.kSpacing3x),
+                
+                Text(
+                  'privacySecurity'.tr(),
+                  style: theme.textTheme.headlineMedium,
+                ),
+                SizedBox(height: AppTheme.kSpacing2x),
+                
+                Text(
+                  'emergencyContacts'.tr(),
+                  style: theme.textTheme.bodyLarge,
+                ),
+                SizedBox(height: AppTheme.kSpacing),
+                Row(
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(AppTheme.kSpacing2x),
+                      decoration: BoxDecoration(
+                        color: AppTheme.kLightGreenContainer,
+                        borderRadius: BorderRadius.circular(AppTheme.kRadiusMedium),
+                      ),
+                      child: DropdownButton<String>(
+                        value: selectedAreaCode,
+                        onChanged: (String? newValue) {
+                          if (newValue != null) {
+                            setState(() => selectedAreaCode = newValue);
+                          }
+                        },
+                        items: areaCodes.map<DropdownMenuItem<String>>((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(value),
+                          );
+                        }).toList(),
+                        underline: Container(),
+                      ),
+                    ),
+                    SizedBox(width: AppTheme.kSpacing),
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: AppTheme.kLightGreenContainer,
+                          borderRadius: BorderRadius.circular(AppTheme.kRadiusMedium),
+                        ),
+                        child: TextField(
+                          keyboardType: TextInputType.phone,
+                          decoration: InputDecoration(
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.all(AppTheme.kSpacing2x),
+                          ),
+                          onChanged: (value) => setState(() => emergencyContact = value),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: AppTheme.kSpacing2x),
+                
+                Text(
+                  'password'.tr(),
+                  style: theme.textTheme.bodyLarge,
+                ),
+                SizedBox(height: AppTheme.kSpacing),
                 Container(
-                  padding: EdgeInsets.all(AppTheme.kSpacing2x),
                   decoration: BoxDecoration(
                     color: AppTheme.kLightGreenContainer,
                     borderRadius: BorderRadius.circular(AppTheme.kRadiusMedium),
                   ),
-                  child: Text('+254'),
-                ),
-                SizedBox(width: AppTheme.kSpacing),
-                Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: AppTheme.kLightGreenContainer,
-                      borderRadius: BorderRadius.circular(AppTheme.kRadiusMedium),
-                    ),
-                    child: TextField(
-                      keyboardType: TextInputType.phone,
-                      decoration: InputDecoration(
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.all(AppTheme.kSpacing2x),
+                  child: TextField(
+                    obscureText: !isPasswordVisible,
+                    decoration: InputDecoration(
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.all(AppTheme.kSpacing2x),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          isPasswordVisible ? Icons.visibility_off : Icons.visibility,
+                          color: AppTheme.kTextBrown,
+                        ),
+                        onPressed: () => setState(() => isPasswordVisible = !isPasswordVisible),
                       ),
-                      onChanged: (value) => setState(() => emergencyContact = value),
+                    ),
+                  ),
+                ),
+                
+                SizedBox(height: AppTheme.kSpacing3x),
+                
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {},
+                    child: Text('logout'.tr()),
+                    style: theme.elevatedButtonTheme.style,
+                  ),
+                ),
+                
+                Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(AppTheme.kSpacing2x),
+                    child: Image.asset(
+                      'assets/logos/sereni_logo.png',
+                      height: 50,
                     ),
                   ),
                 ),
               ],
             ),
-            SizedBox(height: AppTheme.kSpacing2x),
-            
-            // Password Field
-            Text(
-              'Password',
-              style: theme.textTheme.bodyLarge,
-            ),
-            SizedBox(height: AppTheme.kSpacing),
-            Container(
-              decoration: BoxDecoration(
-                color: AppTheme.kLightGreenContainer,
-                borderRadius: BorderRadius.circular(AppTheme.kRadiusMedium),
-              ),
-              child: TextField(
-                obscureText: !isPasswordVisible,
-                decoration: InputDecoration(
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.all(AppTheme.kSpacing2x),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      isPasswordVisible ? Icons.visibility_off : Icons.visibility,
-                      color: AppTheme.kTextBrown,
-                    ),
-                    onPressed: () => setState(() => isPasswordVisible = !isPasswordVisible),
-                  ),
-                ),
-              ),
-            ),
-            
-            Spacer(),
-            
-            // Logout Button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {},
-                child: Text('log out'),
-                style: theme.elevatedButtonTheme.style,
-              ),
-            ),
-            
-            // Logo
-            Center(
-              child: Padding(
-                padding: EdgeInsets.all(AppTheme.kSpacing2x),
-                child: Text(
-                  'Sereni',
-                  style: TextStyle(
-                    color: AppTheme.kPrimaryGreen,
-                    fontSize: 24,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
       bottomNavigationBar: Container(
@@ -258,10 +293,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               tabBackgroundColor: AppTheme.kLightGreenContainer,
               color: AppTheme.kGray600,
               tabs: [
-                GButton(icon: Icons.home, text: 'Home'),
-                GButton(icon: Icons.favorite, text: 'Likes'),
-                GButton(icon: Icons.search, text: 'Search'),
-                GButton(icon: Icons.person, text: 'Profile'),
+                GButton(icon: Icons.home, text: 'home'.tr()),
+                GButton(icon: Icons.favorite, text: 'likes'.tr()),
+                GButton(icon: Icons.search, text: 'search'.tr()),
+                GButton(icon: Icons.person, text: 'profile'.tr()),
               ],
               selectedIndex: _selectedIndex,
               onTabChange: (index) {
@@ -272,6 +307,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       ),
     );
+  }
+
+  String _getLocaleCode(String language) {
+    switch (language.toLowerCase()) {
+      case 'english': return 'en';
+      case 'spanish': return 'es';
+      case 'french': return 'fr';
+      case 'mandarin': return 'zh';
+      case 'arabic': return 'ar';
+      case 'hindi': return 'hi';
+      case 'portuguese': return 'pt';
+      case 'bengali': return 'bn';
+      case 'russian': return 'ru';
+      case 'japanese': return 'ja';
+      default: return 'en';
+    }
   }
 
   Widget _buildSettingContainer({

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 // import 'package:flutter_bloc/flutter_bloc.dart';
 // import 'package:shared_preferences/shared_preferences.dart';
+//import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../presentation/screens/splash_screen.dart';
 import '../presentation/screens/welcome_screen.dart';
 import '../presentation/screens/home_screen.dart';
@@ -12,17 +14,17 @@ class SereniApp extends StatefulWidget {
   const SereniApp({super.key});
 
   @override
-  State<SereniApp> createState() => _SereniAppState();
+  State createState() => _SereniAppState();
 }
 
-class _SereniAppState extends State<SereniApp> {
+class _SereniAppState extends State {
   String? _initialRoute;
   bool _isInitialized = false;
 
   /// Temporary debug override for testing a specific screen.
   /// Set this to a route like `RouteManager.home` when testing.
   /// Change back to `null` to restore normal onboarding behavior.
-  static const String? debugOverrideRoute = RouteManager.home; // Change this for temporary testing
+  static const String debugOverrideRoute = RouteManager.welcome; // Change this for temporary testing
 
   @override
   void initState() {
@@ -30,7 +32,7 @@ class _SereniAppState extends State<SereniApp> {
     _initializeApp();
   }
 
-  Future<void> _initializeApp() async {
+  Future _initializeApp() async {
     try {
       // Determine the initial route dynamically
       final initialRoute = await RouteManager.determineInitialRoute();
@@ -70,6 +72,9 @@ class _SereniAppState extends State<SereniApp> {
         title: 'Sereni',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
+        localizationsDelegates: context.localizationDelegates,
+        supportedLocales: context.supportedLocales,
+        locale: context.locale,
         home: const SplashScreen(),
       );
     }
@@ -81,6 +86,9 @@ class _SereniAppState extends State<SereniApp> {
       title: 'Sereni',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
+      localizationsDelegates: context.localizationDelegates,
+      supportedLocales: context.supportedLocales,
+      locale: context.locale,
       home: _buildInitialScreen(initialRoute),
       onGenerateRoute: RouteManager.generateRoute,
     );
