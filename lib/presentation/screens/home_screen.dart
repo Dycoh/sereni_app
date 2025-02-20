@@ -9,6 +9,8 @@ import '../widgets/psych_score_chart.dart';
 import '../widgets/mood_selector.dart';
 import '../widgets/journal_streak_chart.dart';
 import '../widgets/insights_carousel.dart';
+import '../widgets/navigation_widget.dart';
+import '../../app/routes.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -19,7 +21,9 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   late AnimationController _colorController;
-  late Animation<Color?> _colorAnimation;
+  late Animation<Color?> _colorTween1;
+  late Animation<Color?> _colorTween2;
+  late Animation<Color?> _colorTween3;
   late AnimationController _fillController;
   late Animation<double> _fillAnimation;
   
@@ -32,14 +36,39 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     _colorController = AnimationController(
-      duration: const Duration(seconds: 2),
+      duration: const Duration(seconds: 3),
       vsync: this,
-    )..repeat(reverse: true);
+    )..repeat();
     
-    _colorAnimation = ColorTween(
-      begin: AppTheme.kAccentBrown,
-      end: AppTheme.kPrimaryGreen,
-    ).animate(_colorController);
+    _colorTween1 = ColorTween(
+      begin: Colors.purple,
+      end: Colors.blue,
+    ).animate(
+      CurvedAnimation(
+        parent: _colorController,
+        curve: const Interval(0.0, 0.33, curve: Curves.easeInOut),
+      ),
+    );
+
+    _colorTween2 = ColorTween(
+      begin: Colors.blue,
+      end: Colors.green,
+    ).animate(
+      CurvedAnimation(
+        parent: _colorController,
+        curve: const Interval(0.33, 0.66, curve: Curves.easeInOut),
+      ),
+    );
+
+    _colorTween3 = ColorTween(
+      begin: Colors.green,
+      end: Colors.purple,
+    ).animate(
+      CurvedAnimation(
+        parent: _colorController,
+        curve: const Interval(0.66, 1.0, curve: Curves.easeInOut),
+      ),
+    );
 
     _fillController = AnimationController(
       duration: const Duration(milliseconds: 300),
@@ -73,6 +102,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
     final horizontalPadding = screenWidth < 600 ? 0.05 : 0.1;
     final isSmallScreen = screenWidth < 600;
 
@@ -95,268 +125,188 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       ),
     ];
 
-    return Scaffold(
+    return CustomScaffold(
+      currentRoute: RouteManager.home,
       backgroundColor: AppTheme.kBackgroundColor,
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(kToolbarHeight),
-        child: SafeArea(
-          child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: MediaQuery.of(context).size.width * horizontalPadding,
-            ),
-            child: AppBar(
-              leading: Padding(
-                padding: const EdgeInsets.all(6.0),
-                child: Image.asset(
-                  'assets/logos/sereni_logo.png',
-                  height: 35,
-                ),
-              ),
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.menu),
-                  onPressed: () {
-                    // Handle menu action
-                  },
-                ),
-              ],
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-            ),
-          ),
+      title: null,
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.menu),
+          onPressed: () {
+            // Handle menu action
+          },
         ),
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: MediaQuery.of(context).size.width * horizontalPadding,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: AppTheme.kSpacing3x),
-              // Greeting Section
-              Row(
+      ],
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: MediaQuery.of(context).size.width * horizontalPadding,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: AppTheme.kGray300,
-                      shape: BoxShape.circle,
-                      image: const DecorationImage(
-                        image: AssetImage('assets/images/placeholder_profile.png'),
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: AppTheme.kSpacing2x),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  const SizedBox(height: AppTheme.kSpacing3x),
+                  // Greeting Section
+                  Row(
                     children: [
-                      Text(
-                        _getGreeting(),
-                        style: Theme.of(context).textTheme.bodyLarge,
+                      Container(
+                        width: 64,
+                        height: 64,
+                        decoration: BoxDecoration(
+                          color: AppTheme.kGray300,
+                          shape: BoxShape.circle,
+                          image: const DecorationImage(
+                            image: AssetImage('assets/images/placeholder_profile.png'),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
                       ),
-                      Text(
-                        'John Doe',
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                      const SizedBox(width: AppTheme.kSpacing2x),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _getGreeting(),
+                            style: Theme.of(context).textTheme.bodyLarge,
+                          ),
+                          Text(
+                            'Sarah Mitchell', // Placeholder name
+                            style: Theme.of(context).textTheme.displayMedium,
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
-              ),
-              const SizedBox(height: AppTheme.kSpacing3x),
-              
-              // Main Content Grid
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Left Column - PsychScore
-                  const Expanded(
-                    flex: 1,
-                    child: SizedBox(
-                      height: 224,
-                      child: PsychScoreChart(score: 85),
+                  const SizedBox(height: AppTheme.kSpacing3x),
+                  
+                  // Main Content Grid
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Left Column - PsychScore
+                      const Expanded(
+                        flex: 1,
+                        child: SizedBox(
+                          height: 224,
+                          child: PsychScoreChart(score: 85),
+                        ),
+                      ),
+                      const SizedBox(width: AppTheme.kSpacing2x),
+                      // Right Column - Mood and Journal with Golden Ratio
+                      Expanded(
+                        flex: 1,
+                        child: Column(
+                          children: [
+                            // Mood Container (smaller)
+                            const SizedBox(
+                              height: 64,
+                              child: MoodSelector(),
+                            ),
+                            const SizedBox(height: AppTheme.kSpacing2x),
+                            // Journal Streak Container (larger)
+                            const SizedBox(
+                              height: 144,
+                              child: JournalStreakChart(),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppTheme.kSpacing3x),
+                  
+                  // AI Insights Header
+                  Text(
+                    'AI Insights ✨',
+                    style: Theme.of(context).textTheme.displayLarge,
+                  ),
+                  const SizedBox(height: AppTheme.kSpacing),
+                  // Animated subtitle
+                  AnimatedBuilder(
+                    animation: _typeAnimation,
+                    builder: (context, child) {
+                      return Text(
+                        _subtitle.substring(0, _typeAnimation.value),
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                              color: AppTheme.kGray600,
+                            ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: AppTheme.kSpacing2x),
+                  
+                  // AI Insights Section
+                  SizedBox(
+                    height: 200,
+                    child: InsightsCarousel(
+                      insights: insights,
+                      autoPlay: true,
+                      animationDuration: const Duration(milliseconds: 500),
                     ),
                   ),
-                  const SizedBox(width: AppTheme.kSpacing2x),
-                  // Right Column - Mood and Journal with Golden Ratio
-                  Expanded(
-                    flex: 1,
-                    child: Column(
-                      children: [
-                        // Mood Container (smaller)
-                        const SizedBox(
-                          height: 64, // Approximately 1/φ of total height
-                          child: MoodSelector(),
+                  // Add extra padding at bottom for FAB
+                  SizedBox(height: isSmallScreen ? 100 : 80),
+                ],
+              ),
+            ),
+          ),
+          // Positioned FAB
+          Positioned(
+            bottom: isSmallScreen 
+                ? screenHeight * 0.02  // 2% from bottom for small screens
+                : screenHeight * 0.05, // 5% from bottom for larger screens
+            left: 0,
+            right: 0,
+            child: Center(
+              child: MouseRegion(
+                onEnter: (_) => _fillController.forward(),
+                onExit: (_) => _fillController.reverse(),
+                child: AnimatedBuilder(
+                  animation: Listenable.merge([_colorTween1, _colorTween2, _colorTween3, _fillAnimation]),
+                  builder: (context, child) {
+                    return Container(
+                      height: 60,
+                      width: 60,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        gradient: LinearGradient(
+                          colors: [
+                            _colorTween1.value ?? Colors.purple,
+                            _colorTween2.value ?? Colors.blue,
+                            _colorTween3.value ?? Colors.green,
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
-                        const SizedBox(height: AppTheme.kSpacing2x),
-                        // Journal Streak Container (larger)
-                        const SizedBox(
-                          height: 144, // Remaining space
-                          child: JournalStreakChart(
-                            weeklyEntries: [60, 80, 40, 90, 70],
+                      ),
+                      child: FloatingActionButton(
+                        onPressed: () {
+                          _showActionDialog(context);
+                        },
+                        backgroundColor: Colors.transparent,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Text(
+                          'AI',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 24,
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppTheme.kSpacing3x),
-              
-              // AI Insights Header
-              Text(
-                'AI Insights ✨',
-                style: Theme.of(context).textTheme.displayLarge,
-              ),
-              const SizedBox(height: AppTheme.kSpacing),
-              // Animated subtitle
-              AnimatedBuilder(
-                animation: _typeAnimation,
-                builder: (context, child) {
-                  return Text(
-                    _subtitle.substring(0, _typeAnimation.value),
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: AppTheme.kGray600,
-                        ),
-                  );
-                },
-              ),
-              const SizedBox(height: AppTheme.kSpacing2x),
-              
-              // AI Insights Section
-              SizedBox(
-                height: 200,
-                child: InsightsCarousel(
-                  insights: insights,
-                  autoPlay: true,
-                  animationDuration: const Duration(milliseconds: 500),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-      floatingActionButton: MouseRegion(
-        onEnter: (_) => _fillController.forward(),
-        onExit: (_) => _fillController.reverse(),
-        child: AnimatedBuilder(
-          animation: Listenable.merge([_colorAnimation, _fillAnimation]),
-          builder: (context, child) {
-            return Container(
-              height: 70,
-              width: 70,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [
-                    _colorAnimation.value ?? AppTheme.kAccentBrown,
-                    AppTheme.kPrimaryGreen,
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  stops: [0.0, _fillAnimation.value],
-                ),
-              ),
-              child: FloatingActionButton(
-                onPressed: () {
-                  _showActionButtons(context);
-                },
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                child: const Text(
-                  'AI',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 24,
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: isSmallScreen ? Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha(26),
-              blurRadius: 10,
-            ),
-          ],
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppTheme.kSpacing2x,
-              vertical: AppTheme.kSpacing,
-            ),
-            child: GNav(
-              gap: 8,
-              activeColor: AppTheme.kPrimaryGreen,
-              iconSize: 24,
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppTheme.kSpacing2x,
-                vertical: AppTheme.kSpacing,
-              ),
-              duration: const Duration(milliseconds: 400),
-              tabBackgroundColor: AppTheme.kPrimaryGreen.withAlpha(26),
-              color: AppTheme.kGray400,
-              tabs: const [
-                GButton(
-                  icon: Icons.home,
-                  text: 'Home',
-                ),
-                GButton(
-                  icon: Icons.edit_note,
-                  text: 'Journal',
-                ),
-                GButton(
-                  icon: Icons.insights,
-                  text: 'Insights',
-                ),
-                GButton(
-                  icon: Icons.person_outline,
-                  text: 'Profile',
-                ),
-              ],
-              selectedIndex: 0,
-              onTabChange: (index) {
-                switch (index) {
-                  case 0:
-                    // Already on home
-                    break;
-                  case 1:
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const JournalScreen()),
+                      ),
                     );
-                    break;
-                  case 2:
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const InsightsScreen()),
-                    );
-                    break;
-                  case 3:
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const ProfileScreen()),
-                    );
-                    break;
-                }
-              },
+                  },
+                ),
+              ),
             ),
           ),
-        ),
-      ) : null,
+        ],
+      ),
     );
   }
 
@@ -371,97 +321,189 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     }
   }
 
-  void _showActionButtons(BuildContext context) {
-    showModalBottomSheet(
+  void _showActionDialog(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 600;
+    final dialogWidth = isSmallScreen 
+        ? screenWidth * 0.8 
+        : screenWidth * 0.6; // 60% of screen for wider displays
+        
+    showDialog(
       context: context,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(AppTheme.kSpacing3x),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            Expanded(
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const JournalScreen()),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: AppTheme.kAccentBrown,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppTheme.kSpacing3x,
-                    vertical: AppTheme.kSpacing2x,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(50.0),
-                    side: const BorderSide(
-                      color: AppTheme.kAccentBrown,
-                      width: 2,
-                    ),
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.edit_note),
-                    const SizedBox(width: AppTheme.kSpacing),
-                    Text(
-                      'Journal',
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(width: AppTheme.kSpacing2x),
-            Expanded(
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const ChatScreen()),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.kAccentBrown,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppTheme.kSpacing3x,
-                    vertical: AppTheme.kSpacing2x,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(50.0),
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.chat_bubble_outline),
-                    const SizedBox(width: AppTheme.kSpacing),
-                    Text(
-                      'Chat',
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
+      builder: (context) => Dialog(
+        backgroundColor: AppTheme.kBackgroundColor,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppTheme.kRadiusLarge),
         ),
-      ),
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(AppTheme.kRadiusLarge),
+        child: Container(
+          padding: const EdgeInsets.all(AppTheme.kSpacing3x),
+          width: dialogWidth,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Sereni Logo
+              Image.asset(
+                'assets/logos/sereni_logo.png',
+                height: 48,
+              ),
+              const SizedBox(height: AppTheme.kSpacing3x),
+              
+              // Creative Title
+              Text(
+                'AI Mind Sanctuary',
+                style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              
+              // Witty Subtitle
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  vertical: AppTheme.kSpacing2x,
+                  horizontal: AppTheme.kSpacing,
+                ),
+                child: Text(
+                  'Choose your AI-powered wellness path — express your thoughts or have a mindful conversation',
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: AppTheme.kGray600,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              
+              const SizedBox(height: AppTheme.kSpacing3x),
+              
+              // Journal Button with Animated Outline
+              AnimatedBuilder(
+                animation: _colorController,
+                builder: (context, child) {
+                  return Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(50.0),
+                      gradient: LinearGradient(
+                        colors: [
+                          _colorTween1.value ?? Colors.purple,
+                          _colorTween2.value ?? Colors.blue,
+                          _colorTween3.value ?? Colors.green,
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      // Create padding for the border
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.kBackgroundColor,
+                          spreadRadius: -4,
+                          blurRadius: 0,
+                        ),
+                      ],
+                    ),
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const JournalScreen()),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.kBackgroundColor,
+                        foregroundColor: AppTheme.kAccentBrown,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppTheme.kSpacing3x,
+                          vertical: AppTheme.kSpacing2x,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(48.0),
+                        ),
+                        minimumSize: const Size(double.infinity, 60),
+                        elevation: 0,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.edit_note,
+                            color: AppTheme.kAccentBrown,
+                          ),
+                          const SizedBox(width: AppTheme.kSpacing),
+                          Text(
+                            isSmallScreen ? 'Journal' : 'Express Your Thoughts',
+                            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+              
+              const SizedBox(height: AppTheme.kSpacing2x),
+              
+              // Chat Button with Animated Gradient Fill
+              AnimatedBuilder(
+                animation: _colorController,
+                builder: (context, child) {
+                  return Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(50.0),
+                      gradient: LinearGradient(
+                        colors: [
+                          _colorTween1.value ?? Colors.purple,
+                          _colorTween2.value ?? Colors.blue,
+                          _colorTween3.value ?? Colors.green,
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                    ),
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const ChatScreen()),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppTheme.kSpacing3x,
+                          vertical: AppTheme.kSpacing2x,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(48.0),
+                        ),
+                        minimumSize: const Size(double.infinity, 60),
+                        elevation: 0,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.chat_bubble_outline,
+                            color: Colors.white,
+                          ),
+                          const SizedBox(width: AppTheme.kSpacing),
+                          Text(
+                            isSmallScreen ? 'Chat' : 'Talk With AI',
+                            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
