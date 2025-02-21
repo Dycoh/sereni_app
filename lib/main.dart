@@ -7,7 +7,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_web_plugins/flutter_web_plugins.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:easy_localization/easy_localization.dart';
-
+import 'package:sereni_app/data/services/ai_service.dart';
 
 // Firebase configuration import
 import 'configuration/firebase_options.dart';
@@ -26,6 +26,9 @@ import 'presentation/blocs/auth/auth_bloc.dart';
 import 'presentation/blocs/journal/journal_bloc.dart';
 import 'presentation/blocs/chat/chat_bloc.dart';
 import 'presentation/blocs/profile/profile_bloc.dart';
+
+// Services import
+import 'services/ai_service.dart';
 
 /// Custom BLoC observer for logging state changes and errors during development
 class AppBlocObserver extends BlocObserver {
@@ -56,10 +59,9 @@ Future<void> initializeServices() async {
     await dotenv.load(fileName: ".env");
     debugPrint('Environment variables loaded successfully');
 
- // Initialize Easy Localization
+    // Initialize Easy Localization
     await EasyLocalization.ensureInitialized();
     debugPrint('Easy Localization initialized successfully');
-
 
     // Initialize Firebase with platform-specific options
     await Firebase.initializeApp(
@@ -76,6 +78,7 @@ Future<void> initializeServices() async {
       Hive.openBox('settings'),
       Hive.openBox('user_data'),
       Hive.openBox('journals'),
+      Hive.openBox('chat_history'),  // Added for chat persistence
     ]);
     debugPrint('Hive boxes opened successfully');
   } catch (e) {
@@ -113,13 +116,18 @@ void main() {
     // Set up BLoC observer
     Bloc.observer = AppBlocObserver();
     
+    // Initialize services
+    final aiService = AIService();
+    
     // Initialize repositories
     final authRepository = AuthRepository();
     final userRepository = UserRepository();
     final journalRepository = JournalRepository();
-    final chatRepository = ChatRepository();
+    final chatRepository = ChatRepository(
+      aiService: aiService,
+    );
     
-    debugPrint('All repositories initialized');
+    debugPrint('All repositories and services initialized');
     
     // Run the app with dependency injection
     runApp(
@@ -130,40 +138,41 @@ void main() {
         ],
         path: 'lib/core/utils/translations',
         fallbackLocale: const Locale('en', 'US'),
-        child:  MultiRepositoryProvider(
-         providers: [
-          RepositoryProvider<AuthRepository>.value(value: authRepository),
-          RepositoryProvider<UserRepository>.value(value: userRepository),
-          RepositoryProvider<JournalRepository>.value(value: journalRepository),
-          RepositoryProvider<ChatRepository>.value(value: chatRepository),
-        ],
-        child: MultiBlocProvider(
+        child: MultiRepositoryProvider(
           providers: [
-            BlocProvider<AuthBloc>(
-              create: (context) => AuthBloc(
-                authRepository: authRepository,
-              )..add(InitializeAuth()),
-            ),
-            BlocProvider<ProfileBloc>(
-              create: (context) => ProfileBloc(
-                userRepository: userRepository,
-              )..add(LoadProfile()),
-            ),
-            BlocProvider<JournalBloc>(
-              create: (context) => JournalBloc(
-                journalRepository: journalRepository,
-              )..add(LoadJournals()),
-            ),
-            BlocProvider<ChatBloc>(
-              create: (context) => ChatBloc(
-                chatRepository: chatRepository,
-              )..add(InitializeChat()),
-            ), 
+            RepositoryProvider<AuthRepository>.value(value: authRepository),
+            RepositoryProvider<UserRepository>.value(value: userRepository),
+            RepositoryProvider<JournalRepository>.value(value: journalRepository),
+            RepositoryProvider<ChatRepository>.value(value: chatRepository),
           ],
-          child: const SereniApp(),
+          child: MultiBlocProvider(
+            providers: [
+              BlocProvider<AuthBloc>(
+                create: (context) => AuthBloc(
+                  authRepository: authRepository,
+                )..add(InitializeAuth()),
+              ),
+              BlocProvider<ProfileBloc>(
+                create: (context) => ProfileBloc(
+                  userRepository: userRepository,
+                )..add(LoadProfile()),
+              ),
+              BlocProvider<JournalBloc>(
+                create: (context) => JournalBloc(
+                  journalRepository: journalRepository,
+                )..add(LoadJournals()),
+              ),
+              BlocProvider<ChatBloc>(
+                create: (context) => ChatBloc(
+                  chatRepository,
+                )..add(const InitializeChat()),
+              ),
+            ],
+            child: const SereniApp(),
+          ),
         ),
       ),
-    ));
+    );
   }, (error, stack) {
     debugPrint('Uncaught error: $error');
     debugPrint('Stack trace: $stack');

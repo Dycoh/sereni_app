@@ -1,5 +1,4 @@
-// lib/presentation/bloc/chat_bloc.dart
-
+// lib/presentation/blocs/chat/chat_bloc.dart
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:uuid/uuid.dart';
@@ -34,6 +33,10 @@ class ReceiveMessage extends ChatEvent {
 
   @override
   List<Object> get props => [message];
+}
+
+class ClearChat extends ChatEvent {
+  const ClearChat();
 }
 
 // States
@@ -82,13 +85,14 @@ class ChatError extends ChatState {
 
 // BLoC
 class ChatBloc extends Bloc<ChatEvent, ChatState> {
-  final ChatRepository chatRepository;
+  final ChatRepository _chatRepository;
   final _uuid = const Uuid();
 
-  ChatBloc({required this.chatRepository}) : super(ChatInitial()) {
+  ChatBloc(this._chatRepository) : super(ChatInitial()) {
     on<InitializeChat>(_onInitializeChat);
     on<SendMessage>(_onSendMessage);
     on<ReceiveMessage>(_onReceiveMessage);
+    on<ClearChat>(_onClearChat);
   }
 
   Future<void> _onInitializeChat(
@@ -97,7 +101,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   ) async {
     try {
       emit(ChatLoading());
-      final messages = await chatRepository.getChatHistory();
+      final messages = await _chatRepository.getChatHistory();
       emit(ChatLoaded(messages: messages));
     } catch (e) {
       emit(ChatError(message: 'Failed to initialize chat: ${e.toString()}'));
@@ -127,11 +131,11 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         ));
 
         // Save message
-        await chatRepository.addMessage(userMessage);
+        await _chatRepository.addMessage(userMessage);
 
         // Generate AI response
         try {
-          final aiResponse = await chatRepository.generateAIResponse(event.message);
+          final aiResponse = await _chatRepository.generateAIResponse(event.message);
           final aiMessage = ChatMessage(
             id: _uuid.v4(),
             content: aiResponse,
@@ -157,7 +161,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         final currentState = state as ChatLoaded;
         
         // Save AI message
-        await chatRepository.addMessage(event.message);
+        await _chatRepository.addMessage(event.message);
 
         // Update state with new message and remove processing indicator
         emit(currentState.copyWith(
@@ -167,6 +171,19 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       }
     } catch (e) {
       emit(ChatError(message: 'Failed to receive message: ${e.toString()}'));
+    }
+  }
+
+  Future<void> _onClearChat(
+    ClearChat event,
+    Emitter<ChatState> emit,
+  ) async {
+    try {
+      emit(ChatLoading());
+      await _chatRepository.clearChat();
+      emit(const ChatLoaded(messages: []));
+    } catch (e) {
+      emit(ChatError(message: 'Failed to clear chat: ${e.toString()}'));
     }
   }
 }
