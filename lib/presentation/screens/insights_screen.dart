@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sereni_app/app/theme/theme.dart';
-import 'package:sereni_app/app/app.dart';
 import 'package:sereni_app/app/routes.dart';
-
+import 'package:sereni_app/presentation/widgets/navigation_widget.dart';
 
 class InsightsScreen extends StatefulWidget {
   const InsightsScreen({super.key});
@@ -14,47 +13,86 @@ class InsightsScreen extends StatefulWidget {
 class _InsightsScreenState extends State<InsightsScreen> {
   String selectedPeriod = 'Week';
   
+  String get insightsPeriodTitle {
+    switch (selectedPeriod) {
+      case 'Day':
+        return 'Day Insights';
+      case 'Week':
+        return 'Weekly Insights';
+        case 'Monthly':
+        return 'Monthly Insights';
+      default:
+        return 'Insights';
+    }
+  }
+
+  // Sample data structure - replace with your actual data model
+  Map<String, Map<String, dynamic>> periodData = {
+    'Day': {
+      'triggers': ['Work Deadlines', 'Lack of Sleep'],
+      'solutions': [
+        {'title': 'Time Management', 'description': 'Break down tasks into smaller, manageable chunks'},
+        {'title': 'Sleep Hygiene', 'description': 'Establish a consistent sleep schedule'}
+      ]
+    },
+    'Week': {
+      'triggers': ['Social Media Overuse', 'Irregular Exercise', 'Work Stress'],
+      'solutions': [
+        {'title': 'Digital Wellbeing', 'description': 'Set daily app usage limits and take regular breaks'},
+        {'title': 'Exercise Routine', 'description': 'Schedule regular workout sessions'}
+      ]
+    },
+    'Monthly': {
+      'triggers': ['Financial Stress', 'Family Responsibilities', 'Career Goals'],
+      'solutions': [
+        {'title': 'Budget Planning', 'description': 'Create a monthly budget and tracking system'},
+        {'title': 'Work-Life Balance', 'description': 'Set boundaries and prioritize personal time'}
+      ]
+    }
+  };
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.kBackgroundColor,
-      appBar: AppBar(
-        title: Text(
-          'Insights',
-          style: Theme.of(context).textTheme.displayMedium,
-        ),
-      ),
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isDesktop = screenWidth > 600;
+
+    return CustomScaffold(
+      currentRoute: RouteManager.insights,
+      title: 'Insights',
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(AppTheme.kSpacing2x),
+          padding: EdgeInsets.all(isDesktop ? AppTheme.kSpacing4x : AppTheme.kSpacing2x),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Time Period Selector
-              Container(
-                decoration: BoxDecoration(
-                  color: AppTheme.kLightGreenContainer,
-                  borderRadius: BorderRadius.circular(AppTheme.kRadiusXLarge),
-                ),
-                padding: const EdgeInsets.all(AppTheme.kSpacing),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _buildPeriodButton('Day'),
-                    _buildPeriodButton('Week'),
-                    _buildPeriodButton('Monthly'),
-                  ],
+              // Time Period Selector - Responsive width
+              Center(
+                child: Container(
+                  width: isDesktop ? screenWidth * 0.3 : double.infinity,
+                  decoration: BoxDecoration(
+                    color: AppTheme.kLightGreenContainer,
+                    borderRadius: BorderRadius.circular(AppTheme.kRadiusXLarge),
+                  ),
+                  padding: const EdgeInsets.all(AppTheme.kSpacing),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _buildPeriodButton('Day'),
+                      _buildPeriodButton('Week'),
+                      _buildPeriodButton('Monthly'),
+                    ],
+                  ),
                 ),
               ),
               
               const SizedBox(height: AppTheme.kSpacing3x),
               
-              // Day Insights Section
+              // Period Title with Mood
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Day Insights',
+                    insightsPeriodTitle,
                     style: Theme.of(context).textTheme.headlineLarge,
                   ),
                   Container(
@@ -82,12 +120,13 @@ class _InsightsScreenState extends State<InsightsScreen> {
               
               const SizedBox(height: AppTheme.kSpacing2x),
               
-              // Triggers Section
+              // Triggers Section with enhanced corners
               Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
                   color: AppTheme.kGray100,
-                  borderRadius: BorderRadius.circular(AppTheme.kRadiusMedium),
+                  borderRadius: BorderRadius.circular(AppTheme.kRadiusLarge),
+                  boxShadow: AppTheme.kShadowSmall,
                 ),
                 padding: const EdgeInsets.all(AppTheme.kSpacing2x),
                 child: Column(
@@ -114,16 +153,16 @@ class _InsightsScreenState extends State<InsightsScreen> {
                       ],
                     ),
                     const SizedBox(height: AppTheme.kSpacing2x),
-                    // Trigger items would be listed here
-                    _buildTriggerItem(context, 'Work Deadlines'),
-                    _buildTriggerItem(context, 'Lack of Sleep'),
+                    ...periodData[selectedPeriod]!['triggers'].map((trigger) => 
+                      _buildTriggerItem(context, trigger)
+                    ).toList(),
                   ],
                 ),
               ),
               
               const SizedBox(height: AppTheme.kSpacing3x),
               
-              // Solutions Section
+              // Solutions Section with enhanced corners
               Text(
                 'Possible solutions',
                 style: Theme.of(context).textTheme.headlineLarge,
@@ -135,21 +174,19 @@ class _InsightsScreenState extends State<InsightsScreen> {
                 width: double.infinity,
                 decoration: BoxDecoration(
                   color: AppTheme.kGray100,
-                  borderRadius: BorderRadius.circular(AppTheme.kRadiusMedium),
+                  borderRadius: BorderRadius.circular(AppTheme.kRadiusLarge),
+                  boxShadow: AppTheme.kShadowSmall,
                 ),
                 padding: const EdgeInsets.all(AppTheme.kSpacing2x),
                 child: Column(
                   children: [
-                    _buildSolutionItem(
-                      context,
-                      'Time Management',
-                      'Break down tasks into smaller, manageable chunks',
-                    ),
-                    _buildSolutionItem(
-                      context,
-                      'Sleep Hygiene',
-                      'Establish a consistent sleep schedule and bedtime routine',
-                    ),
+                    ...periodData[selectedPeriod]!['solutions'].map((solution) => 
+                      _buildSolutionItem(
+                        context,
+                        solution['title'],
+                        solution['description'],
+                      )
+                    ).toList(),
                   ],
                 ),
               ),
@@ -180,47 +217,45 @@ class _InsightsScreenState extends State<InsightsScreen> {
                   ),
                 ),
               ),
+
+              // Sereni Logo
+              const SizedBox(height: AppTheme.kSpacing4x),
+              Center(
+                child: Image.asset(
+                  'assets/logos/sereni_logo.png',
+                  height: 40,
+                  fit: BoxFit.contain,
+                ),
+              ),
+              const SizedBox(height: AppTheme.kSpacing2x),
             ],
           ),
         ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 1, // Insights tab
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.insights),
-            label: 'Insights',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-        ],
       ),
     );
   }
 
   Widget _buildPeriodButton(String period) {
     final isSelected = selectedPeriod == period;
-    return GestureDetector(
-      onTap: () => setState(() => selectedPeriod = period),
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppTheme.kSpacing2x,
-          vertical: AppTheme.kSpacing,
-        ),
-        decoration: BoxDecoration(
-          color: isSelected ? AppTheme.kAccentBrown : Colors.transparent,
-          borderRadius: BorderRadius.circular(AppTheme.kRadiusXLarge),
-        ),
-        child: Text(
-          period,
-          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-            color: isSelected ? AppTheme.kWhite : AppTheme.kTextBrown,
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => selectedPeriod = period),
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppTheme.kSpacing,
+            vertical: AppTheme.kSpacing,
+          ),
+          margin: const EdgeInsets.symmetric(horizontal: AppTheme.kSpacing / 2),
+          decoration: BoxDecoration(
+            color: isSelected ? AppTheme.kAccentBrown : Colors.transparent,
+            borderRadius: BorderRadius.circular(AppTheme.kRadiusXLarge),
+          ),
+          child: Text(
+            period,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: isSelected ? AppTheme.kWhite : AppTheme.kTextBrown,
+            ),
           ),
         ),
       ),
