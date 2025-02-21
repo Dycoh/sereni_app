@@ -1,8 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
+
 import 'package:sereni_app/app/theme/theme.dart';
 import 'package:sereni_app/app/routes.dart';
 import 'package:sereni_app/presentation/widgets/navigation_widget.dart';
+
+
 
 // Models
 class ReportEntry {
@@ -10,13 +19,36 @@ class ReportEntry {
   final String type; // 'mood', 'chat', or 'journal'
   final String content;
   final String? moodScore; // Only for mood entries
+  final String? moodEmoji; // Added for mood entries
 
   ReportEntry({
     required this.timestamp,
     required this.type,
     required this.content,
     this.moodScore,
+    this.moodEmoji,
   });
+}
+
+// Helper function to get mood emoji
+String getMoodEmoji(String mood, String score) {
+  // Convert score to number for comparison
+  double scoreNum = double.parse(score.split('/')[0]);
+  
+  switch (mood.toLowerCase()) {
+    case 'happy':
+      return scoreNum >= 8 ? '😄' : '🙂';
+    case 'sad':
+      return scoreNum >= 5 ? '😔' : '😢';
+    case 'angry':
+      return scoreNum >= 5 ? '😠' : '😡';
+    case 'anxious':
+      return scoreNum >= 5 ? '😰' : '😨';
+    case 'calm':
+      return scoreNum >= 8 ? '😌' : '😊';
+    default:
+      return '😐';
+  }
 }
 
 // Report Screen Widget
@@ -24,7 +56,7 @@ class ReportsScreen extends StatefulWidget {
   const ReportsScreen({Key? key}) : super(key: key);
 
   @override
-  State<ReportsScreen> createState() => _ReportsScreenState();
+  _ReportsScreenState createState() => _ReportsScreenState();
 }
 
 class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProviderStateMixin {
@@ -167,6 +199,7 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
     );
   }
 
+
   Widget _buildMoodCard() {
     return Card(
       margin: const EdgeInsets.only(bottom: 16.0),
@@ -178,9 +211,18 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Happy',
-                  style: Theme.of(context).textTheme.titleLarge,
+                Row(
+                  children: [
+                    Text(
+                      getMoodEmoji('Happy', '8/10'), // Add emoji
+                      style: const TextStyle(fontSize: 24),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Happy',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                  ],
                 ),
                 Text(
                   '8/10',
@@ -208,17 +250,16 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
 
 //implementation for chat tab
 
-
-Widget _buildChatsTab() {
+ Widget _buildChatsTab() {
     return ListView.builder(
       padding: const EdgeInsets.all(16.0),
       itemBuilder: (context, index) {
-        return _buildMoodCard(/* Mood data here */);
+        return _buildChatCard();
       },
     );
   }
 
- Widget _buildChatsCard() {
+  Widget _buildChatCard() {
     return Card(
       margin: const EdgeInsets.only(bottom: 16.0),
       child: Padding(
@@ -227,29 +268,34 @@ Widget _buildChatsTab() {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'tired',
-                  style: Theme.of(context).textTheme.titleLarge,
+                const CircleAvatar(
+                  backgroundColor: AppTheme.kLightGreenContainer,
+                  child: Icon(Icons.chat_bubble_outline, color: AppTheme.kPrimaryGreen),
                 ),
-                Text(
-                  '6/10',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: AppTheme.kPrimaryGreen,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Chat with AI Assistant',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      Text(
+                        DateFormat('MMM dd, yyyy - hh:mm a').format(DateTime.now()),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              DateFormat('MMM dd, yyyy - hh:mm a').format(DateTime.now()),
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Feeling  anxious',
-              style: Theme.of(context).textTheme.bodyMedium,
+            const SizedBox(height: 12),
+            const Text(
+              'Q: How can I improve my meditation practice?\n'
+              'A: Start with short sessions, focus on your breath, and gradually increase duration...',
+              style: TextStyle(height: 1.5),
             ),
           ],
         ),
@@ -257,18 +303,17 @@ Widget _buildChatsTab() {
     );
   }
 
-//implementation for journal tab
-
-Widget _buildJournalsTab() {
+  // Journal tab implementation
+  Widget _buildJournalsTab() {
     return ListView.builder(
       padding: const EdgeInsets.all(16.0),
       itemBuilder: (context, index) {
-        return _buildMoodCard(/* Mood data here */);
+        return _buildJournalCard();
       },
     );
   }
 
- Widget _buildJournalsCard() {
+  Widget _buildJournalCard() {
     return Card(
       margin: const EdgeInsets.only(bottom: 16.0),
       child: Padding(
@@ -277,29 +322,30 @@ Widget _buildJournalsTab() {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'sad',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                Text(
-                  '5/10',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: AppTheme.kPrimaryGreen,
+                const Icon(Icons.book_outlined, color: AppTheme.kPrimaryGreen),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Daily Reflection',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      Text(
+                        DateFormat('MMM dd, yyyy - hh:mm a').format(DateTime.now()),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              DateFormat('MMM dd, yyyy - hh:mm a').format(DateTime.now()),
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Feeling sad ,dont know why.',
-              style: Theme.of(context).textTheme.bodyMedium,
+            const SizedBox(height: 12),
+            const Text(
+              'Today was a productive day. I managed to complete my meditation session and made progress on my personal project...',
+              style: TextStyle(height: 1.5),
             ),
           ],
         ),
@@ -307,17 +353,83 @@ Widget _buildJournalsTab() {
     );
   }
 
+  // Print functionality
+  Future<void> _handlePrint() async {
+    final pdf = pw.Document();
 
+    // Add content to PDF
+    pdf.addPage(
+      pw.Page(
+        build: (pw.Context context) {
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text(
+                'Wellness Report',
+                style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold),
+              ),
+              pw.SizedBox(height: 20),
+              pw.Text(
+                'Generated on ${DateFormat('MMM dd, yyyy').format(DateTime.now())}',
+                style: const pw.TextStyle(fontSize: 14),
+              ),
+              pw.SizedBox(height: 30),
+              // Add more sections for moods, chats, and journals...
+            ],
+          );
+        },
+      ),
+    );
 
-
-
-  // Similar implementations for Chats and Journals tabs...
-
-  void _handlePrint() {
-    // Implement print functionality
+    // Print the document
+    await Printing.layoutPdf(
+      onLayout: (PdfPageFormat format) async => pdf.save(),
+    );
   }
 
-  void _handleShare() {
-    // Implement share functionality
+  // Share functionality
+  Future<void> _handleShare() async {
+    try {
+      // Create a temporary file
+      final directory = await getTemporaryDirectory();
+      final fileName = 'wellness_report_${DateFormat('yyyyMMdd').format(DateTime.now())}.txt';
+      final file = File('${directory.path}/$fileName');
+
+      // Generate report content
+      final content = StringBuffer();
+      content.writeln('Wellness Report');
+      content.writeln('Generated on ${DateFormat('MMM dd, yyyy').format(DateTime.now())}');
+      content.writeln('\nMoods:');
+      // Add mood entries...
+      content.writeln('\nChats:');
+      // Add chat entries...
+      content.writeln('\nJournals:');
+      // Add journal entries...
+
+      // Write to file
+      await file.writeAsString(content.toString());
+
+      // Share the file
+      await Share.shareFiles(
+        [file.path],
+        text: 'My Wellness Report',
+        subject: 'Wellness Report ${DateFormat('MMM dd, yyyy').format(DateTime.now())}',
+      );
+    } catch (e) {
+      // Show error dialog
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Error'),
+          content: Text('Failed to share report: $e'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+    }
   }
 }
