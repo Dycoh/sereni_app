@@ -15,6 +15,7 @@ class JournalScreen extends StatefulWidget {
 
 class _JournalScreenState extends State<JournalScreen> {
   final TextEditingController _journalController = TextEditingController();
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   double _moodValue = 5.0;
   bool _isSubmitting = false;
   bool _isAutoAnalyzing = true;
@@ -65,8 +66,8 @@ class _JournalScreenState extends State<JournalScreen> {
     final horizontalPadding = isDesktop ? screenWidth * 0.1 : screenWidth * 0.05;
 
     return BackgroundDecorator(
-      child: CustomScaffold(
-        currentRoute: RouteManager.journal,
+      child: Scaffold(
+        key: _scaffoldKey,
         backgroundColor: Colors.transparent,
         appBar: PreferredSize(
           preferredSize: const Size.fromHeight(kToolbarHeight),
@@ -78,30 +79,90 @@ class _JournalScreenState extends State<JournalScreen> {
               ),
               child: Row(
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.only(right: 16.0),
-                    child: Image.asset(
-                      'assets/logos/sereni_logo.png',
-                      height: 32,
-                    ),
-                  ),
-                  const Spacer(),
                   IconButton(
-                    icon: const Icon(Icons.menu),
+                    icon: const Icon(
+                      Icons.menu,
+                      color: AppTheme.kTextBrown,
+                      size: 28,
+                    ),
                     onPressed: () {
-                      Scaffold.of(context).openEndDrawer();
+                      _scaffoldKey.currentState?.openDrawer();
                     },
+                  ),
+                  const SizedBox(width: 16),
+                  Image.asset(
+                    'assets/logos/sereni_logo.png',
+                    height: 32,
                   ),
                 ],
               ),
             ),
           ),
         ),
+        drawer: Drawer(
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              DrawerHeader(
+                decoration: BoxDecoration(
+                  color: AppTheme.kPrimaryGreen.withOpacity(0.1),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Image.asset(
+                      'assets/logos/sereni_logo.png',
+                      height: 40,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Your Mindful Journey',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: AppTheme.kTextBrown,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.home, color: AppTheme.kPrimaryGreen),
+                title: const Text('Home'),
+                onTap: () => Navigator.pushReplacementNamed(context, RouteManager.home),
+              ),
+              ListTile(
+                leading: const Icon(Icons.edit_note, color: AppTheme.kPrimaryGreen),
+                title: const Text('Journal'),
+                selected: true,
+                selectedTileColor: AppTheme.kPrimaryGreen.withOpacity(0.1),
+                onTap: () => Navigator.pop(context),
+              ),
+              ListTile(
+                leading: const Icon(Icons.insights, color: AppTheme.kPrimaryGreen),
+                title: const Text('Insights'),
+                onTap: () => Navigator.pushReplacementNamed(context, RouteManager.insights),
+              ),
+              ListTile(
+                leading: const Icon(Icons.person_outline, color: AppTheme.kPrimaryGreen),
+                title: const Text('Profile'),
+                onTap: () => Navigator.pushReplacementNamed(context, RouteManager.profile),
+              ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.logout, color: AppTheme.kAccentBrown),
+                title: const Text('Logout'),
+                onTap: () {
+                  // Implement logout logic
+                },
+              ),
+            ],
+          ),
+        ),
         body: SafeArea(
           child: SingleChildScrollView(
             child: Padding(
               padding: EdgeInsets.symmetric(
-                horizontal: isDesktop ? screenWidth * 0.1 : screenWidth * 0.05,
+                horizontal: horizontalPadding,
                 vertical: AppTheme.kSpacing3x,
               ),
               child: Column(
@@ -162,8 +223,15 @@ class _JournalScreenState extends State<JournalScreen> {
     return Container(
       padding: const EdgeInsets.all(AppTheme.kSpacing2x),
       decoration: BoxDecoration(
-        color: AppTheme.kPrimaryGreen.withOpacity(0.15),
+        color: Colors.white.withOpacity(0.9),
         borderRadius: BorderRadius.circular(50),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.kPrimaryGreen.withOpacity(0.1),
+            blurRadius: 10,
+            spreadRadius: 2,
+          ),
+        ],
       ),
       child: Column(
         children: [
@@ -172,7 +240,7 @@ class _JournalScreenState extends State<JournalScreen> {
               Expanded(
                 child: SliderTheme(
                   data: SliderTheme.of(context).copyWith(
-                    activeTrackColor: AppTheme.kPrimaryGreen.withOpacity(0.6),
+                    activeTrackColor: AppTheme.kPrimaryGreen.withOpacity(0.8),
                     inactiveTrackColor: AppTheme.kGray300.withOpacity(0.3),
                     overlayColor: AppTheme.kPrimaryGreen.withOpacity(0.15),
                     trackHeight: 8.0,
@@ -220,6 +288,15 @@ class _JournalScreenState extends State<JournalScreen> {
   Widget _buildTextEditorControls() {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.9),
+        border: Border(
+          bottom: BorderSide(
+            color: AppTheme.kGray300.withOpacity(0.3),
+            width: 1,
+          ),
+        ),
+      ),
       child: Row(
         children: [
           IconButton(
@@ -269,56 +346,75 @@ class _JournalScreenState extends State<JournalScreen> {
 
   Widget _buildJournalEditor() {
     return Container(
-      padding: const EdgeInsets.all(AppTheme.kSpacing2x),
       decoration: BoxDecoration(
-        color: AppTheme.kWhite,
+        color: Colors.white.withOpacity(0.95),
         borderRadius: BorderRadius.circular(AppTheme.kRadiusMedium),
-        boxShadow: AppTheme.kShadowSmall,
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.kPrimaryGreen.withOpacity(0.1),
+            blurRadius: 15,
+            spreadRadius: 5,
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Text('✨ Journal Entry'),
-              const Spacer(),
-              TextButton.icon(
-                icon: const Icon(Icons.refresh, size: 18),
-                label: const Text('New Prompt'),
-                onPressed: () {
-                  setState(() {
-                    _currentPrompt = _getRandomPrompt();
-                  });
-                },
-              ),
-            ],
-          ),
-          const SizedBox(height: AppTheme.kSpacing),
-          Text(
-            _currentPrompt,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: AppTheme.kGray600,
-              fontStyle: FontStyle.italic,
+          Padding(
+            padding: const EdgeInsets.all(AppTheme.kSpacing2x),
+            child: Row(
+              children: [
+                const Text(
+                  '✨ Journal Entry',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                const Spacer(),
+                TextButton.icon(
+                  icon: const Icon(Icons.refresh, size: 18),
+                  label: const Text('New Prompt'),
+                  onPressed: () {
+                    setState(() {
+                      _currentPrompt = _getRandomPrompt();
+                    });
+                  },
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: AppTheme.kSpacing),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppTheme.kSpacing2x),
+            child: Text(
+              _currentPrompt,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: AppTheme.kGray600,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ),
           _buildTextEditorControls(),
-          const SizedBox(height: AppTheme.kSpacing),
           Container(
             height: 300,
             decoration: BoxDecoration(
-              color: AppTheme.kBackgroundColor.withOpacity(0.5),
-              borderRadius: BorderRadius.circular(AppTheme.kRadiusSmall),
+              color: Colors.white,
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(AppTheme.kRadiusMedium),
+                bottomRight: Radius.circular(AppTheme.kRadiusMedium),
+              ),
             ),
             child: TextField(
               controller: _journalController,
               maxLines: null,
               expands: true,
               textAlignVertical: TextAlignVertical.top,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 hintText: 'Let your thoughts flow freely...',
                 border: InputBorder.none,
-                contentPadding: EdgeInsets.all(AppTheme.kSpacing2x),
+                contentPadding: const EdgeInsets.all(AppTheme.kSpacing2x),
+                fillColor: Colors.white.withOpacity(0.9),
+                filled: true,
               ),
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                 fontWeight: _isBold ? FontWeight.bold : FontWeight.normal,
@@ -327,9 +423,13 @@ class _JournalScreenState extends State<JournalScreen> {
               ),
               onChanged: _isAutoAnalyzing ? _analyzeEntryMood : null,
             ),
+            
+            // continuation
+            ),
+          Padding(
+            padding: const EdgeInsets.all(AppTheme.kSpacing2x),
+            child: _buildWordCount(),
           ),
-          const SizedBox(height: AppTheme.kSpacing),
-          _buildWordCount(),
         ],
       ),
     );
@@ -373,8 +473,18 @@ class _JournalScreenState extends State<JournalScreen> {
   }
 
   Widget _buildSubmitButton() {
-    return SizedBox(
+    return Container(
       width: double.infinity,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(50),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.kAccentBrown.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
       child: ElevatedButton(
         onPressed: _isSubmitting ? null : _handleSubmit,
         style: ElevatedButton.styleFrom(
@@ -385,18 +495,34 @@ class _JournalScreenState extends State<JournalScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(50),
           ),
+          elevation: 0,
         ),
         child: _isSubmitting
-            ? const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppTheme.kWhite),
-              )
-            : const Text(
-                'Save this moment ✨',
-                style: TextStyle(
-                  color: AppTheme.kWhite,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
+            ? const SizedBox(
+                height: 24,
+                width: 24,
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(AppTheme.kWhite),
+                  strokeWidth: 2.5,
                 ),
+              )
+            : const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Save this moment',
+                    style: TextStyle(
+                      color: AppTheme.kWhite,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    '✨',
+                    style: TextStyle(fontSize: 18),
+                  ),
+                ],
               ),
       ),
     );
@@ -420,12 +546,13 @@ class _JournalScreenState extends State<JournalScreen> {
     try {
       // TODO: Implement journal entry saving logic here
       
+      await Future.delayed(const Duration(seconds: 1)); // Simulated API call
+      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Entry saved! Keep shining ${_getMoodEmoji()}'),
             backgroundColor: AppTheme.kSuccessGreen,
-            
           ),
         );
         _journalController.clear();
@@ -469,7 +596,6 @@ class EmojiSliderThumbShape extends SliderComponentShape {
     return const Size(30, 30);
   }
 
-  
   @override
   void paint(
     PaintingContext context,
@@ -486,6 +612,12 @@ class EmojiSliderThumbShape extends SliderComponentShape {
     required double value,
   }) {
     final canvas = context.canvas;
+    
+    // Draw background circle with shadow
+    final shadowPaint = Paint()
+      ..color = Colors.black.withOpacity(0.1)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
+    canvas.drawCircle(center, 16, shadowPaint);
     
     // Draw background circle
     final backgroundPaint = Paint()
