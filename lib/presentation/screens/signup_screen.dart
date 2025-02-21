@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../app/theme/theme.dart';
-// import 'onboarding_screen.dart';
 import 'home_screen.dart';
 import 'signin_screen.dart';
 import '../widgets/custom_appbar_widget.dart';
 import '../widgets/background_decorator_widget.dart';
+import '../../data/repositories/user_repository.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -18,6 +19,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
+  final UserRepository _userRepository = UserRepository();
   bool _isSigningUp = false;
   bool _showPassword = false;
   bool _showConfirmPassword = false;
@@ -135,27 +137,71 @@ class _SignUpScreenState extends State<SignUpScreen> {
     });
   }
 
-  void _handleSignUp() {
+  Future<void> _handleSignUp() async {
     _validateInputs();
     
     if (_nameError == null && _emailError == null && 
         _passwordError == null && _confirmPasswordError == null) {
       setState(() => _isSigningUp = true);
 
-      // Here you would typically call your authentication service
-      // For now, we'll simulate a delay and then navigate to home screen
-      Future.delayed(const Duration(seconds: 1), () {
+      try {
+        final navigatorContext = context;
+        
+        // Create Firebase Auth user
+        final userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+          email: _emailController.text,
+          password: _passwordController.text,
+        );
+
+        // Update display name
+        await userCredential.user?.updateDisplayName(_nameController.text);
+
+        // Create user profile in Firestore
+        await _userRepository.createUserProfile(userCredential.user!);
+
+        if (!mounted) return;
         setState(() => _isSigningUp = false);
         _showSuccessDialog();
-      });
+        
+      } catch (e) {
+        if (!mounted) return;
+        setState(() => _isSigningUp = false);
+        
+        String errorMessage = 'An error occurred during sign up';
+        if (e is FirebaseAuthException) {
+          switch (e.code) {
+            case 'email-already-in-use':
+              errorMessage = 'This email is already registered';
+              break;
+            case 'invalid-email':
+              errorMessage = 'Invalid email address';
+              break;
+            case 'operation-not-allowed':
+              errorMessage = 'Email/password accounts are not enabled';
+              break;
+            case 'weak-password':
+              errorMessage = 'Please choose a stronger password';
+              break;
+          }
+        }
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
   void _showSuccessDialog() {
+    if (!mounted) return;
+    
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) {
+      builder: (dialogContext) {
         return Dialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppTheme.kRadiusMedium),
@@ -172,7 +218,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 const SizedBox(height: AppTheme.kSpacing2x),
                 Text(
                   'Welcome to Sereni!',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  style: Theme.of(dialogContext).textTheme.headlineMedium?.copyWith(
                     color: AppTheme.kTextGreen,
                     fontWeight: FontWeight.w600,
                   ),
@@ -191,22 +237,21 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 const SizedBox(height: AppTheme.kSpacing),
                 Text(
                   'Account Created Successfully!',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  style: Theme.of(dialogContext).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w500,
                   ),
                 ),
                 const SizedBox(height: AppTheme.kSpacing),
                 Text(
                   'Your wellness journey begins now...',
-                  style: Theme.of(context).textTheme.bodyMedium,
+                  style: Theme.of(dialogContext).textTheme.bodyMedium,
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: AppTheme.kSpacing3x),
                 ElevatedButton(
                   onPressed: () {
-                    Navigator.of(context).pop(); // Close dialog
-                    // Navigate to home screen
-                    Navigator.of(context).pushReplacement(
+                    Navigator.of(dialogContext).pop(); // Close dialog
+                    Navigator.of(dialogContext).pushReplacement(
                       MaterialPageRoute(builder: (context) => const HomeScreen()),
                     );
                   },
@@ -316,8 +361,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
         horizontal: AppTheme.kSpacing2x,
         vertical: AppTheme.kSpacing2x,
       ),
-      child: Container(
-        decoration: BoxDecoration(
+      child: Card(
+        elevation: 4,
+        shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppTheme.kRadiusLarge),
         ),
         child: Padding(
@@ -343,9 +389,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
         const SizedBox(height: AppTheme.kSpacing),
 
         Text(
-          'Create your account to start your wellness journey',
+          'Begin your journey to mindfulness & balance',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: AppTheme.kTextBrown.withOpacity(0.7),
+            color: AppTheme.kTextBrown.withAlpha(179), // 0.7 * 255
           ),
         ),
 
@@ -394,18 +440,22 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   color: AppTheme.kTextBrown,
                 ),
                 decoration: InputDecoration(
-                  hintText: 'enter your full name',
+                  hintText: 'How should we call you?',
                   hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: AppTheme.kTextBrown.withAlpha(153),
                   ),
-                  fillColor: AppTheme.kPrimaryGreen.withOpacity(0.1),
+                  fillColor: AppTheme.kPrimaryGreen.withAlpha(26), // 0.1 * 255
                   filled: true,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(50.0),
                     borderSide: BorderSide.none,
                   ),
                   errorText: _nameError,
-                  errorStyle: TextStyle(color: AppTheme.kErrorRed),
+                  errorStyle: TextStyle(
+                    color: AppTheme.kErrorRed,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 12,
+                  ),
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: AppTheme.kSpacing2x,
                     vertical: AppTheme.kSpacing2x,
@@ -415,7 +465,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
             ),
           ],
         ),
-
         const SizedBox(height: AppTheme.kSpacing3x),
         
         // Email input
@@ -454,18 +503,22 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   color: AppTheme.kTextBrown,
                 ),
                 decoration: InputDecoration(
-                hintText: 'enter email address',
+                  hintText: 'Where can we reach you?',
                   hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: AppTheme.kTextBrown.withAlpha(153),
                   ),
-                  fillColor: AppTheme.kPrimaryGreen.withOpacity(0.1),
+                  fillColor: AppTheme.kPrimaryGreen.withAlpha(26), // 0.1 * 255
                   filled: true,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(50.0),
                     borderSide: BorderSide.none,
                   ),
                   errorText: _emailError,
-                  errorStyle: TextStyle(color: AppTheme.kErrorRed),
+                  errorStyle: TextStyle(
+                    color: AppTheme.kErrorRed,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 12,
+                  ),
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: AppTheme.kSpacing2x,
                     vertical: AppTheme.kSpacing2x,
@@ -517,18 +570,22 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       color: AppTheme.kTextBrown,
                     ),
                     decoration: InputDecoration(
-                      hintText: 'enter password',
+                      hintText: 'Create a secure password',
                       hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: AppTheme.kTextBrown.withAlpha(153),
                       ),
-                      fillColor: AppTheme.kPrimaryGreen.withOpacity(0.1),
+                      fillColor: AppTheme.kPrimaryGreen.withAlpha(26), // 0.1 * 255
                       filled: true,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(50.0),
                         borderSide: BorderSide.none,
                       ),
                       errorText: _passwordError,
-                      errorStyle: TextStyle(color: AppTheme.kErrorRed),
+                      errorStyle: TextStyle(
+                        color: AppTheme.kErrorRed,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 12,
+                      ),
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: AppTheme.kSpacing2x,
                         vertical: AppTheme.kSpacing2x,
@@ -557,7 +614,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     Text(
                       _passwordFeedback,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppTheme.kTextBrown,
+                        color: _passwordStrengthColor,
+                        fontWeight: FontWeight.w500,
                         fontStyle: FontStyle.italic,
                       ),
                       textAlign: TextAlign.left,
@@ -607,18 +665,22 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   color: AppTheme.kTextBrown,
                 ),
                 decoration: InputDecoration(
-                  hintText: 'confirm your password',
+                  hintText: 'Just to be sure...',
                   hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: AppTheme.kTextBrown.withAlpha(153),
                   ),
-                  fillColor: AppTheme.kPrimaryGreen.withOpacity(0.1),
+                  fillColor: AppTheme.kPrimaryGreen.withAlpha(26), // 0.1 * 255
                   filled: true,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(50.0),
                     borderSide: BorderSide.none,
                   ),
                   errorText: _confirmPasswordError,
-                  errorStyle: TextStyle(color: AppTheme.kErrorRed),
+                  errorStyle: TextStyle(
+                    color: AppTheme.kErrorRed,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 12,
+                  ),
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: AppTheme.kSpacing2x,
                     vertical: AppTheme.kSpacing2x,
@@ -642,15 +704,30 @@ class _SignUpScreenState extends State<SignUpScreen> {
         Center(
           child: SizedBox(
             width: double.infinity,
+            height: 56,
             child: ElevatedButton(
               onPressed: _isSigningUp ? null : _handleSignUp,
+              style: ElevatedButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(28),
+                ),
+                backgroundColor: AppTheme.kPrimaryGreen,
+                elevation: 2,
+              ),
               child: _isSigningUp
-                  ? const CircularProgressIndicator(color: AppTheme.kWhite)
+                  ? const SizedBox(
+                      height: 24,
+                      width: 24,
+                      child: CircularProgressIndicator(
+                        color: AppTheme.kWhite,
+                        strokeWidth: 3,
+                      ),
+                    )
                   : Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          'Create Account',
+                          'Start Your Journey',
                           style: Theme.of(context).textTheme.labelLarge?.copyWith(
                             color: AppTheme.kWhite,
                             fontWeight: FontWeight.w600,
@@ -676,7 +753,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                'Already have an account? ',
+                'Already on the path? ',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: AppTheme.kTextBrown,
                 ),

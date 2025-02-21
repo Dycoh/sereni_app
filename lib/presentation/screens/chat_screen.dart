@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:uuid/uuid.dart';
 import '../../app/routes.dart';
 import '../../app/theme/theme.dart';
 import '../../domain/entities/chat.dart';
@@ -17,14 +18,15 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final String _chatId = const Uuid().v4(); // Generate a unique chat ID
   bool _isRecording = false;
-  bool _isVoiceAvailable = true;
+  final bool _isVoiceAvailable = true; // Made final as it's not changing
   bool _isSidePanelOpen = true;
 
   @override
   void initState() {
     super.initState();
-    context.read<ChatBloc>().add(const InitializeChat());
+    context.read<ChatBloc>().add(InitializeChat(chatId: _chatId));
   }
 
   @override
@@ -51,7 +53,10 @@ class _ChatScreenState extends State<ChatScreen> {
   void _handleSendMessage() {
     final message = _messageController.text.trim();
     if (message.isNotEmpty) {
-      context.read<ChatBloc>().add(SendMessage(message: message));
+      context.read<ChatBloc>().add(SendMessage(
+            message: message,
+            chatId: _chatId,
+          ));
       _messageController.clear();
       _scrollToBottom();
     }
@@ -86,7 +91,7 @@ class _ChatScreenState extends State<ChatScreen> {
               width: 300,
               margin: const EdgeInsets.all(AppTheme.kSpacing2x),
               decoration: BoxDecoration(
-                color: AppTheme.kPrimaryGreen.withOpacity(0.1),
+                color: AppTheme.kPrimaryGreen.withValues(alpha: 26), // Fixed deprecated withOpacity
                 borderRadius: BorderRadius.circular(AppTheme.kRadiusLarge),
                 boxShadow: AppTheme.kShadowSmall,
               ),
@@ -130,7 +135,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           ),
                           decoration: BoxDecoration(
                             color: isSelected
-                                ? AppTheme.kPrimaryGreen.withOpacity(0.1)
+                                ? AppTheme.kPrimaryGreen.withValues(alpha: 26)
                                 : Colors.transparent,
                             borderRadius:
                                 BorderRadius.circular(AppTheme.kRadiusMedium),
@@ -232,7 +237,6 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  // Rest of the widget methods remain the same...
   Widget _buildWelcomeCard(double contentWidth) {
     return Center(
       child: SizedBox(
@@ -397,10 +401,10 @@ class _ChatBubble extends StatelessWidget {
   final bool isUser;
 
   const _ChatBubble({
-    Key? key,
+    super.key,
     required this.message,
     required this.isUser,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -433,7 +437,7 @@ class _ChatBubble extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+               Text(
                     message.content,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: AppTheme.kWhite,
@@ -443,7 +447,7 @@ class _ChatBubble extends StatelessWidget {
                   Text(
                     DateFormat('HH:mm').format(message.timestamp),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppTheme.kWhite.withOpacity(0.7),
+                          color: AppTheme.kWhite.withValues(alpha: 179), // Fixed deprecated withOpacity(0.7)
                         ),
                   ),
                 ],

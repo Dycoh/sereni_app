@@ -1,4 +1,3 @@
-// data/repositories/user_repository.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import '../../domain/entities/user.dart';
@@ -18,14 +17,28 @@ class UserRepository {
     return UserModel.fromMap(doc.data()!).toDomain();
   }
 
+  Future<void> createUserProfile(firebase_auth.User user) async {
+    final userModel = UserModel(
+      id: user.uid,
+      email: user.email ?? '',
+      name: user.displayName ?? '',
+      createdAt: DateTime.now(),
+    );
+
+    await _firestore.collection('users').doc(user.uid).set(
+      userModel.toMap(),
+      SetOptions(merge: true),
+    );
+  }
+
   Future<void> updateUser(User user) async {
     final currentUser = _auth.currentUser;
     if (currentUser == null) throw Exception('No authenticated user');
 
     await _firestore.collection('users').doc(currentUser.uid).set(
-          UserModel.fromDomain(user).toMap(),
-          SetOptions(merge: true),
-        );
+      UserModel.fromDomain(user).toMap(),
+      SetOptions(merge: true),
+    );
   }
 
   Future<void> deleteUser() async {
@@ -40,11 +53,7 @@ class UserRepository {
     final currentUser = _auth.currentUser;
     if (currentUser == null) return Stream.value(null);
 
-    return _firestore
-        .collection('users')
-        .doc(currentUser.uid)
-        .snapshots()
-        .map((doc) {
+    return _firestore.collection('users').doc(currentUser.uid).snapshots().map((doc) {
       if (!doc.exists) return null;
       return UserModel.fromMap(doc.data()!).toDomain();
     });

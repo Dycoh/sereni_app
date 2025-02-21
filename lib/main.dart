@@ -27,9 +27,6 @@ import 'presentation/blocs/journal/journal_bloc.dart';
 import 'presentation/blocs/chat/chat_bloc.dart';
 import 'presentation/blocs/profile/profile_bloc.dart';
 
-// Services import
-import 'services/ai_service.dart';
-
 /// Custom BLoC observer for logging state changes and errors during development
 class AppBlocObserver extends BlocObserver {
   @override
@@ -165,7 +162,7 @@ void main() {
               BlocProvider<ChatBloc>(
                 create: (context) => ChatBloc(
                   chatRepository,
-                )..add(const InitializeChat()),
+                )..add(InitializeChat(chatId: 'default')), // Added required chatId parameter
               ),
             ],
             child: const SereniApp(),

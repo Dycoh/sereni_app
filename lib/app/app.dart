@@ -22,9 +22,9 @@ class _SereniAppState extends State {
   bool _isInitialized = false;
 
   /// Temporary debug override for testing a specific screen.
-  /// Set this to a route like `RouteManager.home` when testing.
-  /// Change back to `null` to restore normal onboarding behavior.
-  static const String debugOverrideRoute = RouteManager.home; // Change this for temporary testing
+  /// Set this to a route like RouteManager.home when testing.
+  /// Set to null to restore normal onboarding behavior.
+  static const String? debugOverrideRoute = null; // Fixed: Use null directly instead of RouteManager.null
 
   @override
   void initState() {
@@ -32,7 +32,7 @@ class _SereniAppState extends State {
     _initializeApp();
   }
 
-  Future _initializeApp() async {
+  Future<void> _initializeApp() async {
     try {
       // Determine the initial route dynamically
       final initialRoute = await RouteManager.determineInitialRoute();
@@ -79,7 +79,7 @@ class _SereniAppState extends State {
       );
     }
 
-    /// If `debugOverrideRoute` is set, use it instead of the normal flow.
+    /// If debugOverrideRoute is set, use it instead of the normal flow.
     final String initialRoute = debugOverrideRoute ?? _initialRoute ?? RouteManager.welcome;
 
     return MaterialApp(
@@ -100,7 +100,7 @@ class _SereniAppState extends State {
       case RouteManager.welcome:
         return const WelcomeScreen();
       case RouteManager.home:
-        return const HomeScreen(); // Example: Add other screens as needed
+        return const HomeScreen();
       default:
         return const WelcomeScreen();
     }

@@ -1,6 +1,9 @@
+// lib/presentation/screens/onboarding_screen.dart
+
 import 'package:flutter/material.dart';
 import '../../app/theme/theme.dart';
 import '../../app/routes.dart';
+import '../../presentation/widgets/background_decorator_widget.dart';
 
 class AssetPaths {
   static const String nameBot = 'assets/gifs/onboarding_name_bot.gif';
@@ -230,80 +233,91 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
 
-  @override
+ @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.kBackgroundColor,
       body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.1), // 10% padding
-          child: Stack(
-            children: [
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final isWideScreen = constraints.maxWidth > 800;
-                  
-                  if (isWideScreen) {
-                    return Row(
-                      children: [
-                        Expanded(
-                          flex: 6, // Changed from 8 to 6
-                          child: Center(
-                            child: SizedBox(
-                              height: constraints.maxHeight * 0.8,
-                              child: _buildGifSection(),
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          flex: 6, // Changed from 5 to 6
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: AppTheme.kSpacing6x,
-                              vertical: AppTheme.kSpacing2x,
-                            ),
-                            child: Center(
-                              child: SizedBox(
-                                height: constraints.maxHeight * 0.7,
-                                child: _buildContentSection(),
+        child: BackgroundDecorator(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final isWideScreen = constraints.maxWidth > 800;
+              // Adjust content width based on screen size
+              final horizontalPadding = constraints.maxWidth * (isWideScreen ? 0.1 : 0.05);
+              
+              return Padding(
+                padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                child: Stack(
+                  children: [
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        if (isWideScreen) {
+                          return Row(
+                            children: [
+                              Expanded(
+                                flex: 6,
+                                child: Center(
+                                  child: SizedBox(
+                                    height: constraints.maxHeight * 0.8,
+                                    width: constraints.maxWidth * 0.4, // 80% of half the screen
+                                    child: _buildGifSection(),
+                                  ),
+                                ),
                               ),
+                              Expanded(
+                                flex: 6,
+                                child: Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: AppTheme.kSpacing6x,
+                                    vertical: AppTheme.kSpacing2x,
+                                  ),
+                                  child: Center(
+                                    child: SizedBox(
+                                      height: constraints.maxHeight * 0.7,
+                                      width: constraints.maxWidth * 0.4, // 80% of half the screen
+                                      child: _buildContentSection(),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        }
+                        
+                        return SingleChildScrollView(
+                          child: Padding(
+                            padding: EdgeInsets.all(AppTheme.kSpacing4x),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                SizedBox(height: AppTheme.kSpacing2x),
+                                SizedBox(
+                                  height: constraints.maxHeight * 0.4,
+                                  width: constraints.maxWidth * 0.9, // 90% of screen width
+                                  child: _buildGifSection(),
+                                ),
+                                SizedBox(height: AppTheme.kSpacing2x),
+                                SizedBox(
+                                  height: constraints.maxHeight * 0.6,
+                                  width: constraints.maxWidth * 0.9, // 90% of screen width
+                                  child: _buildContentSection(),
+                                ),
+                              ],
                             ),
                           ),
-                        ),
-                      ],
-                    );
-                  }
-                  
-                  return SingleChildScrollView(
-                    child: Padding(
-                      padding: EdgeInsets.all(AppTheme.kSpacing4x),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          SizedBox(height: AppTheme.kSpacing2x),
-                          SizedBox(
-                            height: constraints.maxHeight * 0.4,
-                            child: _buildGifSection(),
-                          ),
-                          SizedBox(height: AppTheme.kSpacing2x),
-                          SizedBox(
-                            height: constraints.maxHeight * 0.6,
-                            child: _buildContentSection(),
-                          ),
-                        ],
-                      ),
+                        );
+                      },
                     ),
-                  );
-                },
-              ),
-              _buildBackButton(),
-            ],
+                    _buildBackButton(),
+                  ],
+                ),
+              );
+            },
           ),
         ),
       ),
     );
   }
-
   Widget _buildGifSection() {
     return PageView.builder(
       controller: _gifPageController,

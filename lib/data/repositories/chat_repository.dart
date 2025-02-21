@@ -1,5 +1,4 @@
 // lib/data/repositories/chat_repository.dart
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../domain/entities/chat.dart';
@@ -22,23 +21,10 @@ class ChatRepository {
   CollectionReference<Map<String, dynamic>> get _chatsCollection =>
       _firestore.collection('users').doc(_auth.currentUser?.uid).collection('chats');
 
-  DocumentReference<Map<String, dynamic>> get _currentChatDoc =>
-      _chatsCollection.doc('current_chat');
-
-  Future<List<ChatMessage>> getChatHistory() async {
+  Future<List<ChatMessage>> getChatHistory(String chatId) async {
     try {
-      final docSnapshot = await _currentChatDoc.get();
-      
-      if (!docSnapshot.exists) {
-        // Create a new chat if none exists
-        await _currentChatDoc.set(ChatModel(
-          id: 'current_chat',
-          messages: [],
-          createdAt: DateTime.now(),
-        ).toMap());
-        return [];
-      }
-
+      final docSnapshot = await _chatsCollection.doc(chatId).get();
+      if (!docSnapshot.exists) return [];
       final chatModel = ChatModel.fromMap(docSnapshot.data()!);
       return chatModel.messages.map((msg) => msg.toDomain()).toList();
     } catch (e) {
@@ -46,26 +32,15 @@ class ChatRepository {
     }
   }
 
-  Future<void> addMessage(ChatMessage message) async {
+  Future<void> addMessage(String chatId, ChatMessage message) async {
     try {
-      final docSnapshot = await _currentChatDoc.get();
-      
-      if (!docSnapshot.exists) {
-        // Create new chat with the message
-        await _currentChatDoc.set(ChatModel(
-          id: 'current_chat',
-          messages: [ChatMessageModel.fromDomain(message)],
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-        ).toMap());
-        return;
-      }
+      final docSnapshot = await _chatsCollection.doc(chatId).get();
+      final chatModel = docSnapshot.exists
+          ? ChatModel.fromMap(docSnapshot.data()!)
+          : ChatModel(id: chatId, messages: [], createdAt: DateTime.now());
 
-      // Add message to existing chat
-      final chatModel = ChatModel.fromMap(docSnapshot.data()!);
       final updatedMessages = [...chatModel.messages, ChatMessageModel.fromDomain(message)];
-      
-      await _currentChatDoc.update({
+      await _chatsCollection.doc(chatId).update({
         'messages': updatedMessages.map((msg) => msg.toMap()).toList(),
         'updatedAt': DateTime.now().toIso8601String(),
       });
@@ -76,21 +51,18 @@ class ChatRepository {
 
   Future<String> generateAIResponse(String userMessage) async {
     try {
-      // Get AI response using the AI service
-      final response = await _aiService.generateResponse(userMessage);
-      return response;
+      return await _aiService.generateResponse(userMessage);
     } catch (e) {
       throw Exception('Failed to generate AI response: $e');
     }
   }
 
-  Future<void> clearChat() async {
+  Future<void> clearChat(String chatId) async {
     try {
-      await _currentChatDoc.set(ChatModel(
-        id: 'current_chat',
-        messages: [],
-        createdAt: DateTime.now(),
-      ).toMap());
+      await _chatsCollection.doc(chatId).update({
+        'messages': [],
+        'updatedAt': DateTime.now().toIso8601String(),
+      });
     } catch (e) {
       throw Exception('Failed to clear chat: $e');
     }

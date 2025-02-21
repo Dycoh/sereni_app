@@ -1,4 +1,4 @@
-// journal_repository.dart
+// lib/data/repositories/journal_repository.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../domain/entities/journal.dart';
@@ -15,16 +15,13 @@ class JournalRepository with BaseRepository<Journal> {
   @override
   Future<Journal?> getById(String id) async {
     final doc = await _journalsCollection.doc(id).get();
-    if (!doc.exists) return null;
-    return JournalModel.fromMap(doc.data()!).toDomain();
+    return doc.exists ? JournalModel.fromMap(doc.data()!).toDomain() : null;
   }
 
   @override
   Future<List<Journal>> getAll() async {
     final snapshot = await _journalsCollection.get();
-    return snapshot.docs
-        .map((doc) => JournalModel.fromMap(doc.data()).toDomain())
-        .toList();
+    return snapshot.docs.map((doc) => JournalModel.fromMap(doc.data()).toDomain()).toList();
   }
 
   @override
@@ -42,31 +39,6 @@ class JournalRepository with BaseRepository<Journal> {
   @override
   Future<void> delete(String id) async {
     await _journalsCollection.doc(id).delete();
-  }
-
-  Future<List<Journal>> getJournalsByDate(DateTime date) async {
-    final startOfDay = DateTime(date.year, date.month, date.day);
-    final endOfDay = startOfDay.add(const Duration(days: 1));
-
-    final snapshot = await _journalsCollection
-        .where('createdAt', isGreaterThanOrEqualTo: startOfDay)
-        .where('createdAt', isLessThan: endOfDay)
-        .get();
-
-    return snapshot.docs
-        .map((doc) => JournalModel.fromMap(doc.data()).toDomain())
-        .toList();
-  }
-
-  Future<List<Journal>> getJournalsByDateRange(DateTime start, DateTime end) async {
-    final snapshot = await _journalsCollection
-        .where('createdAt', isGreaterThanOrEqualTo: start)
-        .where('createdAt', isLessThan: end)
-        .get();
-
-    return snapshot.docs
-        .map((doc) => JournalModel.fromMap(doc.data()).toDomain())
-        .toList();
   }
 
   Stream<List<Journal>> get journalStream {

@@ -1,7 +1,10 @@
+//lib/presentation/screens/welcome_Screen.dart
+
 import 'package:flutter/material.dart';
 import 'dart:async';
 import '../../app/theme/theme.dart';
 import 'onboarding_screen.dart';
+import '../../presentation/widgets/background_decorator_widget.dart';
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
@@ -74,19 +77,22 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     return Scaffold(
       backgroundColor: AppTheme.kBackgroundColor,
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final sidePadding = constraints.maxWidth * 0.1;
-            final gutterWidth = constraints.maxWidth * 0.05; // 5% gutter
-            final isWideScreen = constraints.maxWidth > 800;
-            
-            return Padding(
-              padding: EdgeInsets.symmetric(horizontal: sidePadding),
-              child: isWideScreen 
-                ? _buildWideScreenLayout(constraints, gutterWidth)
-                : _buildNarrowScreenLayout(constraints),
-            );
-          },
+        child: BackgroundDecorator(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final isWideScreen = constraints.maxWidth > 800;
+              // Adjust side padding based on screen width
+              final sidePadding = constraints.maxWidth * (isWideScreen ? 0.1 : 0.05);
+              final gutterWidth = constraints.maxWidth * 0.05; // 5% gutter
+              
+              return Padding(
+                padding: EdgeInsets.symmetric(horizontal: sidePadding),
+                child: isWideScreen 
+                  ? _buildWideScreenLayout(constraints, gutterWidth)
+                  : _buildNarrowScreenLayout(constraints),
+              );
+            },
+          ),
         ),
       ),
     );
@@ -100,6 +106,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           child: Center(
             child: SizedBox(
               height: constraints.maxHeight * 0.8,
+              width: constraints.maxWidth * 0.4, // 80% of half the screen
               child: Image.asset(
                 _gifPath,
                 fit: BoxFit.contain,
@@ -107,12 +114,13 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
             ),
           ),
         ),
-        SizedBox(width: gutterWidth), // 5% gutter
+        SizedBox(width: gutterWidth),
         Expanded(
           flex: 6,
           child: Center(
             child: SizedBox(
               height: constraints.maxHeight * 0.8,
+              width: constraints.maxWidth * 0.4, // 80% of half the screen
               child: _buildContentSection(isWideScreen: true),
             ),
           ),
@@ -129,6 +137,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           SizedBox(height: AppTheme.kSpacing4x),
           SizedBox(
             height: constraints.maxHeight * 0.4,
+            width: constraints.maxWidth * 0.8, // 90% of screen width
             child: Image.asset(
               _gifPath,
               fit: BoxFit.contain,
@@ -136,6 +145,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           ),
           SizedBox(height: AppTheme.kSpacing4x),
           SizedBox(
+            width: constraints.maxWidth * 0.8, // 90% of screen width
             child: _buildContentSection(isWideScreen: false),
           ),
         ],
@@ -144,62 +154,65 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   }
 
   Widget _buildContentSection({required bool isWideScreen}) {
-    return SingleChildScrollView(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (isWideScreen) ...[
-            SizedBox(
-              height: 48,
-              child: Image.asset(
-                _logoPath,
-                fit: BoxFit.contain,
-                alignment: Alignment.centerLeft,
+    return Padding(
+      padding: EdgeInsets.only(top: isWideScreen ? AppTheme.kSpacing8x : AppTheme.kSpacing4x),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (isWideScreen) ...[
+              SizedBox(
+                height: 48,
+                child: Image.asset(
+                  _logoPath,
+                  fit: BoxFit.contain,
+                  alignment: Alignment.centerLeft,
+                ),
               ),
+              SizedBox(height: AppTheme.kSpacing4x),
+            ],
+            
+            Text(
+              _currentTitle,
+              style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                color: AppTheme.kTextBrown,
+                fontWeight: FontWeight.w800,
+                fontSize: 48,
+              ),
+              textAlign: TextAlign.left,
+            ),
+            SizedBox(height: AppTheme.kSpacing2x),
+            
+            Container(
+              width: 180,
+              height: 3,
+              decoration: BoxDecoration(
+                color: AppTheme.kPrimaryGreen.withOpacity(0.5),
+                borderRadius: BorderRadius.circular(1.5),
+              ),
+            ),
+            SizedBox(height: AppTheme.kSpacing3x),
+            
+            Text(
+              _currentSubtitle,
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                color: AppTheme.kTextBrown,
+                fontWeight: FontWeight.w300,
+                fontSize: 16,
+              ),
+              textAlign: TextAlign.left,
+            ),
+            SizedBox(height: AppTheme.kSpacing6x),
+            
+            AnimatedOpacity(
+              opacity: _subtitleComplete ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 500),
+              child: _buildGetStartedButton(),
             ),
             SizedBox(height: AppTheme.kSpacing4x),
           ],
-          
-          Text(
-            _currentTitle,
-            style: Theme.of(context).textTheme.displayLarge?.copyWith(
-              color: AppTheme.kTextBrown,
-              fontWeight: FontWeight.w800,
-              fontSize: 48,
-            ),
-            textAlign: TextAlign.left,
-          ),
-          SizedBox(height: AppTheme.kSpacing2x),
-          
-          Container(
-            width: 180,
-            height: 3,
-            decoration: BoxDecoration(
-              color: AppTheme.kPrimaryGreen.withOpacity(0.5),
-              borderRadius: BorderRadius.circular(1.5),
-            ),
-          ),
-          SizedBox(height: AppTheme.kSpacing3x),
-          
-          Text(
-            _currentSubtitle,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              color: AppTheme.kTextBrown,
-              fontWeight: FontWeight.w300,
-              fontSize: 16,
-            ),
-            textAlign: TextAlign.left,
-          ),
-          SizedBox(height: AppTheme.kSpacing6x),
-          
-          AnimatedOpacity(
-            opacity: _subtitleComplete ? 1.0 : 0.0,
-            duration: const Duration(milliseconds: 500),
-            child: _buildGetStartedButton(),
-          ),
-          SizedBox(height: AppTheme.kSpacing4x),
-        ],
+        ),
       ),
     );
   }
