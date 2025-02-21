@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../app/theme/theme.dart';
 import '../widgets/navigation_widget.dart';
+import '../widgets/background_decorator_widget.dart';
 import '../../app/routes.dart';
- // Add this import for the correct TextDirection
 import 'dart:ui' as ui;
-
 
 class JournalScreen extends StatefulWidget {
   const JournalScreen({super.key});
@@ -19,8 +18,10 @@ class _JournalScreenState extends State<JournalScreen> {
   double _moodValue = 5.0;
   bool _isSubmitting = false;
   bool _isAutoAnalyzing = true;
+  bool _isBold = false;
+  bool _isItalic = false;
+  bool _isUnderline = false;
 
-  // Mood emojis from negative to positive
   final List<String> _moodEmojis = [
     '😢', '😔', '😕', '😐', '🙂', '😊', '😄', '🥳', '⭐', '✨',
   ];
@@ -59,58 +60,77 @@ class _JournalScreenState extends State<JournalScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return CustomScaffold(
-      currentRoute: RouteManager.journal,
-      backgroundColor: AppTheme.kBackgroundColor,
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(kToolbarHeight),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                Image.asset(
-                  'assets/logos/sereni_logo.png',
-                  height: 32,
-                ),
-              ],
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isDesktop = screenWidth > 600;
+    final horizontalPadding = isDesktop ? screenWidth * 0.1 : screenWidth * 0.05;
+
+    return BackgroundDecorator(
+      child: CustomScaffold(
+        currentRoute: RouteManager.journal,
+        backgroundColor: Colors.transparent,
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(kToolbarHeight),
+          child: SafeArea(
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: horizontalPadding,
+                vertical: 8,
+              ),
+              child: Row(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(right: 16.0),
+                    child: Image.asset(
+                      'assets/logos/sereni_logo.png',
+                      height: 32,
+                    ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.menu),
+                    onPressed: () {
+                      Scaffold.of(context).openEndDrawer();
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
         ),
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: MediaQuery.of(context).size.width * 0.1,
-              vertical: AppTheme.kSpacing3x,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeader(),
-                const SizedBox(height: AppTheme.kSpacing3x),
-                _buildMoodSelector(),
-                const SizedBox(height: AppTheme.kSpacing4x),
-                Text(
-                  "Time to reflect on your journey ✨",
-                  style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                    color: AppTheme.kTextBrown,
+        body: SafeArea(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: isDesktop ? screenWidth * 0.1 : screenWidth * 0.05,
+                vertical: AppTheme.kSpacing3x,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildHeader(),
+                  const SizedBox(height: AppTheme.kSpacing3x),
+                  _buildMoodSelector(),
+                  const SizedBox(height: AppTheme.kSpacing4x),
+                  Text(
+                    "Time to reflect on your journey ✨",
+                    style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                      color: AppTheme.kTextBrown,
+                    ),
                   ),
-                ),
-                const SizedBox(height: AppTheme.kSpacing),
-                Text(
-                  DateFormat('EEEE, MMMM d, h:mm a').format(DateTime.now()),
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: AppTheme.kGray600,
-                    fontStyle: FontStyle.italic,
+                  const SizedBox(height: AppTheme.kSpacing),
+                  Text(
+                    DateFormat('EEEE, MMMM d, h:mm a').format(DateTime.now()),
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: AppTheme.kGray600,
+                      fontStyle: FontStyle.italic,
+                    ),
                   ),
-                ),
-                const SizedBox(height: AppTheme.kSpacing2x),
-                _buildJournalEditor(),
-                const SizedBox(height: AppTheme.kSpacing3x),
-                _buildSubmitButton(),
-              ],
+                  const SizedBox(height: AppTheme.kSpacing2x),
+                  _buildJournalEditor(),
+                  const SizedBox(height: AppTheme.kSpacing3x),
+                  _buildSubmitButton(),
+                ],
+              ),
             ),
           ),
         ),
@@ -142,7 +162,7 @@ class _JournalScreenState extends State<JournalScreen> {
     return Container(
       padding: const EdgeInsets.all(AppTheme.kSpacing2x),
       decoration: BoxDecoration(
-        color: AppTheme.kPrimaryGreen.withValues(alpha: 26),
+        color: AppTheme.kPrimaryGreen.withOpacity(0.15),
         borderRadius: BorderRadius.circular(50),
       ),
       child: Column(
@@ -152,9 +172,9 @@ class _JournalScreenState extends State<JournalScreen> {
               Expanded(
                 child: SliderTheme(
                   data: SliderTheme.of(context).copyWith(
-                    activeTrackColor: AppTheme.kPrimaryGreen,
-                    inactiveTrackColor: AppTheme.kGray300,
-                    overlayColor: AppTheme.kPrimaryGreen.withValues(alpha: 26),
+                    activeTrackColor: AppTheme.kPrimaryGreen.withOpacity(0.6),
+                    inactiveTrackColor: AppTheme.kGray300.withOpacity(0.3),
+                    overlayColor: AppTheme.kPrimaryGreen.withOpacity(0.15),
                     trackHeight: 8.0,
                     thumbShape: EmojiSliderThumbShape(
                       emoji: _getMoodEmoji(),
@@ -197,6 +217,56 @@ class _JournalScreenState extends State<JournalScreen> {
     );
   }
 
+  Widget _buildTextEditorControls() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        children: [
+          IconButton(
+            icon: Icon(
+              Icons.format_bold,
+              color: _isBold ? AppTheme.kPrimaryGreen : AppTheme.kGray600,
+            ),
+            onPressed: () => setState(() => _isBold = !_isBold),
+          ),
+          IconButton(
+            icon: Icon(
+              Icons.format_italic,
+              color: _isItalic ? AppTheme.kPrimaryGreen : AppTheme.kGray600,
+            ),
+            onPressed: () => setState(() => _isItalic = !_isItalic),
+          ),
+          IconButton(
+            icon: Icon(
+              Icons.format_underline,
+              color: _isUnderline ? AppTheme.kPrimaryGreen : AppTheme.kGray600,
+            ),
+            onPressed: () => setState(() => _isUnderline = !_isUnderline),
+          ),
+          const VerticalDivider(width: 16),
+          IconButton(
+            icon: const Icon(Icons.format_list_bulleted),
+            onPressed: () {
+              final text = _journalController.text;
+              final selection = _journalController.selection;
+              final newText = '• ${text.substring(selection.start, selection.end)}\n';
+              _journalController.text = text.replaceRange(selection.start, selection.end, newText);
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.format_quote),
+            onPressed: () {
+              final text = _journalController.text;
+              final selection = _journalController.selection;
+              final newText = '> ${text.substring(selection.start, selection.end)}';
+              _journalController.text = text.replaceRange(selection.start, selection.end, newText);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildJournalEditor() {
     return Container(
       padding: const EdgeInsets.all(AppTheme.kSpacing2x),
@@ -231,11 +301,13 @@ class _JournalScreenState extends State<JournalScreen> {
               fontStyle: FontStyle.italic,
             ),
           ),
-          const SizedBox(height: AppTheme.kSpacing2x),
+          const SizedBox(height: AppTheme.kSpacing),
+          _buildTextEditorControls(),
+          const SizedBox(height: AppTheme.kSpacing),
           Container(
             height: 300,
             decoration: BoxDecoration(
-              color: AppTheme.kBackgroundColor.withValues(alpha: 128),
+              color: AppTheme.kBackgroundColor.withOpacity(0.5),
               borderRadius: BorderRadius.circular(AppTheme.kRadiusSmall),
             ),
             child: TextField(
@@ -248,7 +320,11 @@ class _JournalScreenState extends State<JournalScreen> {
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.all(AppTheme.kSpacing2x),
               ),
-              style: Theme.of(context).textTheme.bodyLarge,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                fontWeight: _isBold ? FontWeight.bold : FontWeight.normal,
+                fontStyle: _isItalic ? FontStyle.italic : FontStyle.normal,
+                decoration: _isUnderline ? TextDecoration.underline : TextDecoration.none,
+              ),
               onChanged: _isAutoAnalyzing ? _analyzeEntryMood : null,
             ),
           ),
@@ -349,6 +425,7 @@ class _JournalScreenState extends State<JournalScreen> {
           SnackBar(
             content: Text('Entry saved! Keep shining ${_getMoodEmoji()}'),
             backgroundColor: AppTheme.kSuccessGreen,
+            
           ),
         );
         _journalController.clear();
@@ -382,7 +459,6 @@ class _JournalScreenState extends State<JournalScreen> {
   }
 }
 
-
 class EmojiSliderThumbShape extends SliderComponentShape {
   final String emoji;
 
@@ -393,6 +469,7 @@ class EmojiSliderThumbShape extends SliderComponentShape {
     return const Size(30, 30);
   }
 
+  
   @override
   void paint(
     PaintingContext context,
@@ -402,11 +479,11 @@ class EmojiSliderThumbShape extends SliderComponentShape {
     required bool isDiscrete,
     required TextPainter labelPainter,
     required RenderBox parentBox,
+    required Size sizeWithOverflow,
     required SliderThemeData sliderTheme,
     required ui.TextDirection textDirection,
-    required double value,
     required double textScaleFactor,
-    required Size sizeWithOverflow,
+    required double value,
   }) {
     final canvas = context.canvas;
     
