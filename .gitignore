@@ -52,3 +52,6 @@
 *.iml
 *.iws
 .DS_Store
+
+# gemini api
+.env

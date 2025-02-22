@@ -49,7 +49,9 @@ dependencies:
 
   # AI/ML
   google_generative_ai: ^0.4.6
-  
+  speech_to_text: ^7.0.0
+  logging: ^1.0.2
+
   # Multilingual support 
   # easy_localization: ^3.0.0
 

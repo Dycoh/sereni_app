@@ -1,12 +1,15 @@
-import 'package:flutter/material.dart';
+    import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
+import 'package:google_generative_ai/google_generative_ai.dart';
 import '../../app/routes.dart';
 import '../../app/theme/theme.dart';
 import '../../domain/entities/chat.dart';
 import '../../presentation/blocs/chat/chat_bloc.dart';
 import '../widgets/navigation_widget.dart';
+import '../widgets/background_decorator_widget.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -18,15 +21,34 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  final String _chatId = const Uuid().v4(); // Generate a unique chat ID
+  final String _chatId = const Uuid().v4();
+  late GenerativeModel _geminiModel;
+  late ChatSession _chatSession;
+  late stt.SpeechToText _speech;
   bool _isRecording = false;
-  final bool _isVoiceAvailable = true; // Made final as it's not changing
+  final bool _isVoiceAvailable = true;
   bool _isSidePanelOpen = true;
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
+    _initializeGemini();
+    _initializeSpeechToText();
     context.read<ChatBloc>().add(InitializeChat(chatId: _chatId));
+  }
+
+  Future<void> _initializeGemini() async {
+    _geminiModel = GenerativeModel(
+      model: 'gemini-pro',
+      apiKey: 'gemini api key',
+    );
+    _chatSession = _geminiModel.startChat();
+  }
+
+  Future<void> _initializeSpeechToText() async {
+    _speech = stt.SpeechToText();
+    await _speech.initialize();
   }
 
   @override
@@ -50,22 +72,59 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  void _handleSendMessage() {
+  Future<void> _handleSendMessage() async {
     final message = _messageController.text.trim();
     if (message.isNotEmpty) {
+      setState(() => _isLoading = true);
+      
       context.read<ChatBloc>().add(SendMessage(
-            message: message,
-            chatId: _chatId,
-          ));
-      _messageController.clear();
-      _scrollToBottom();
+        message: message,
+        chatId: _chatId,
+        isUser: false,
+      ));
+
+      try {
+        final response = await _chatSession.sendMessage(Content.text(message));
+        final geminiResponse = response.text ?? "I couldn't process that request.";
+        
+        context.read<ChatBloc>().add(SendMessage(
+          message: geminiResponse,
+          chatId: _chatId,
+          isUser: false,
+        ));
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}')),
+        );
+      } finally {
+        setState(() => _isLoading = false);
+        _messageController.clear();
+        _scrollToBottom();
+      }
     }
   }
 
-  void _handleVoiceInput(bool isRecording) {
-    setState(() => _isRecording = isRecording);
-    if (!isRecording) {
-      // TODO: Implement voice-to-text conversion
+  Future<void> _handleVoiceInput(bool isRecording) async {
+    if (!_speech.isAvailable) return;
+
+    if (isRecording) {
+      final bool available = await _speech.initialize();
+      if (available) {
+        setState(() => _isRecording = true);
+        await _speech.listen(
+          onResult: (result) {
+            setState(() {
+              _messageController.text = result.recognizedWords;
+            });
+          },
+        );
+      }
+    } else {
+      setState(() => _isRecording = false);
+      _speech.stop();
+      if (_messageController.text.isNotEmpty) {
+        await _handleSendMessage();
+      }
     }
   }
 
@@ -75,164 +134,178 @@ class _ChatScreenState extends State<ChatScreen> {
     final isLargeScreen = screenWidth > 600;
     final contentWidth = isLargeScreen ? screenWidth * 0.8 : screenWidth * 0.9;
 
-    return CustomScaffold(
-      currentRoute: RouteManager.chat,
-      appBar: AppBar(
-        leading: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Image.asset('assets/logos/sereni_logo.png'),
+    return BackgroundDecorator(
+      child: CustomScaffold(
+        currentRoute: RouteManager.chat,
+        appBar: AppBar(
+          leading: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Image.asset('assets/logos/sereni_logo.png'),
+          ),
+          title: const Text('Chat with Sereni'),
         ),
-        title: const Text('Chat with Sereni'),
-      ),
-      body: Row(
-        children: [
-          if (_isSidePanelOpen)
-            Container(
-              width: 300,
-              margin: const EdgeInsets.all(AppTheme.kSpacing2x),
-              decoration: BoxDecoration(
-                color: AppTheme.kPrimaryGreen.withValues(alpha: 26), // Fixed deprecated withOpacity
-                borderRadius: BorderRadius.circular(AppTheme.kRadiusLarge),
-                boxShadow: AppTheme.kShadowSmall,
-              ),
-              child: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(AppTheme.kSpacing2x),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'My Chats',
-                                style: Theme.of(context).textTheme.displayMedium,
-                              ),
-                              Text(
-                                'Where conversations bloom into insights 🌱',
-                                style: Theme.of(context).textTheme.bodyMedium,
-                              ),
-                            ],
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.chevron_left),
-                          onPressed: _toggleSidePanel,
-                        ),
-                      ],
+        body: Row(
+          children: [
+            if (_isSidePanelOpen)
+              Container(
+                width: 300,
+                margin: const EdgeInsets.all(AppTheme.kSpacing2x),
+                decoration: BoxDecoration(
+                  color: AppTheme.kPrimaryGreen.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(AppTheme.kRadiusLarge),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
                     ),
-                  ),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: 5,
-                      itemBuilder: (context, index) {
-                        final isSelected = index == 0;
-                        return Container(
-                          margin: const EdgeInsets.symmetric(
-                            horizontal: AppTheme.kSpacing2x,
-                            vertical: AppTheme.kSpacing,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? AppTheme.kPrimaryGreen.withValues(alpha: 26)
-                                : Colors.transparent,
-                            borderRadius:
-                                BorderRadius.circular(AppTheme.kRadiusMedium),
-                          ),
-                          child: ListTile(
-                            title: Text(
-                              'Chat ${index + 1}',
-                              style: Theme.of(context).textTheme.headlineMedium,
-                            ),
-                            subtitle: Text(
-                              DateFormat('MMM d, y').format(DateTime.now()),
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
-                                  ?.copyWith(color: AppTheme.kGray600),
-                            ),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(AppTheme.kSpacing2x),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                IconButton(
-                                  icon: const Icon(Icons.edit,
-                                      color: AppTheme.kGray600),
-                                  onPressed: () {},
+                                Text(
+                                  'My Chats',
+                                  style: Theme.of(context).textTheme.displayMedium,
                                 ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete,
-                                      color: AppTheme.kGray600),
-                                  onPressed: () {},
+                                Text(
+                                  'Where conversations bloom into insights 🌱',
+                                  style: Theme.of(context).textTheme.bodyMedium,
                                 ),
                               ],
                             ),
                           ),
-                        );
-                      },
+                          IconButton(
+                            icon: const Icon(Icons.chevron_left),
+                            onPressed: _toggleSidePanel,
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(AppTheme.kSpacing2x),
-                    child: Column(
-                      children: [
-                        ElevatedButton(
-                          onPressed: () {},
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.kPrimaryGreen,
-                            minimumSize: const Size(double.infinity, 48),
-                          ),
-                          child: const Text('Get AI Insights'),
-                        ),
-                        const SizedBox(height: AppTheme.kSpacing),
-                        ElevatedButton(
-                          onPressed: () {},
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.kGray200,
-                            foregroundColor: AppTheme.kTextBrown,
-                            minimumSize: const Size(double.infinity, 48),
-                          ),
-                          child: const Text('Clear All Chats'),
-                        ),
-                        const SizedBox(height: AppTheme.kSpacing2x),
-                        Text(
-                          '✨ Every chat is a step toward growth',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                fontStyle: FontStyle.italic,
-                                color: AppTheme.kGray600,
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: 5,
+                        itemBuilder: (context, index) {
+                          final isSelected = index == 0;
+                          return Container(
+                            margin: const EdgeInsets.symmetric(
+                              horizontal: AppTheme.kSpacing2x,
+                              vertical: AppTheme.kSpacing,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? AppTheme.kPrimaryGreen.withOpacity(0.2)
+                                  : Colors.transparent,
+                              borderRadius:
+                                  BorderRadius.circular(AppTheme.kRadiusMedium),
+                            ),
+                            child: ListTile(
+                              title: Text(
+                                'Chat ${index + 1}',
+                                style: Theme.of(context).textTheme.headlineMedium,
                               ),
-                        ),
-                      ],
+                              subtitle: Text(
+                                DateFormat('MMM d, y').format(DateTime.now()),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(color: AppTheme.kGray600),
+                              ),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.edit,
+                                        color: AppTheme.kGray600),
+                                    onPressed: () {},
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.delete,
+                                        color: AppTheme.kGray600),
+                                    onPressed: () {},
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     ),
+                    Padding(
+                      padding: const EdgeInsets.all(AppTheme.kSpacing2x),
+                      child: Column(
+                        children: [
+                          ElevatedButton(
+                            onPressed: () {},
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.kPrimaryGreen,
+                              minimumSize: const Size(double.infinity, 48),
+                            ),
+                            child: const Text('Get AI Insights'),
+                          ),
+                          const SizedBox(height: AppTheme.kSpacing),
+                          ElevatedButton(
+                            onPressed: () {},
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.kGray200,
+                              foregroundColor: AppTheme.kTextBrown,
+                              minimumSize: const Size(double.infinity, 48),
+                            ),
+                            child: const Text('Clear All Chats'),
+                          ),
+                          const SizedBox(height: AppTheme.kSpacing2x),
+                          Text(
+                            '✨ Every chat is a step toward growth',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  fontStyle: FontStyle.italic,
+                                  color: AppTheme.kGray600,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            Expanded(
+              child: Stack(
+                children: [
+                  if (!_isSidePanelOpen)
+                    Positioned(
+                      left: AppTheme.kSpacing2x,
+                      top: AppTheme.kSpacing2x,
+                      child: IconButton(
+                        icon: const Icon(Icons.chevron_right),
+                        onPressed: _toggleSidePanel,
+                      ),
+                    ),
+                  Column(
+                    children: [
+                      _buildWelcomeCard(contentWidth),
+                      Expanded(
+                        child: _buildChatMessages(contentWidth),
+                      ),
+                      _buildInputArea(contentWidth),
+                    ],
                   ),
+                  if (_isLoading)
+                    const Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(AppTheme.kPrimaryGreen),
+                      ),
+                    ),
                 ],
               ),
             ),
-          Expanded(
-            child: Stack(
-              children: [
-                if (!_isSidePanelOpen)
-                  Positioned(
-                    left: AppTheme.kSpacing2x,
-                    top: AppTheme.kSpacing2x,
-                    child: IconButton(
-                      icon: const Icon(Icons.chevron_right),
-                      onPressed: _toggleSidePanel,
-                    ),
-                  ),
-                Column(
-                  children: [
-                    _buildWelcomeCard(contentWidth),
-                    Expanded(
-                      child: _buildChatMessages(contentWidth),
-                    ),
-                    _buildInputArea(contentWidth),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -296,15 +369,6 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                   isUser: false,
                 ),
-                _ChatBubble(
-                  message: ChatMessage(
-                    id: 'placeholder-2',
-                    content: "I'm feeling a bit anxious about my upcoming presentation...",
-                    timestamp: DateTime.now(),
-                    isUser: true,
-                  ),
-                  isUser: true,
-                ),
                 if (state is ChatLoaded)
                   ...state.messages.map((message) => _ChatBubble(
                         message: message,
@@ -325,7 +389,13 @@ class _ChatScreenState extends State<ChatScreen> {
         padding: const EdgeInsets.all(AppTheme.kSpacing2x),
         decoration: BoxDecoration(
           color: AppTheme.kWhite,
-          boxShadow: AppTheme.kShadowSmall,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, -4),
+            ),
+          ],
         ),
         child: SafeArea(
           child: Row(
@@ -372,7 +442,7 @@ class _ChatScreenState extends State<ChatScreen> {
         decoration: BoxDecoration(
           color: _isRecording ? AppTheme.kErrorRed : AppTheme.kAccentBrown,
           shape: BoxShape.circle,
-        ),
+          ),
         child: Icon(
           _isRecording ? Icons.mic : Icons.mic_none,
           color: AppTheme.kWhite,
@@ -401,10 +471,10 @@ class _ChatBubble extends StatelessWidget {
   final bool isUser;
 
   const _ChatBubble({
-    super.key,
+    Key? key,
     required this.message,
     required this.isUser,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -433,11 +503,18 @@ class _ChatBubble extends StatelessWidget {
                   bottomLeft: Radius.circular(isUser ? AppTheme.kRadiusLarge : 0.0),
                   bottomRight: Radius.circular(isUser ? 0.0 : AppTheme.kRadiusLarge),
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 5,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-               Text(
+                  Text(
                     message.content,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: AppTheme.kWhite,
@@ -447,7 +524,7 @@ class _ChatBubble extends StatelessWidget {
                   Text(
                     DateFormat('HH:mm').format(message.timestamp),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppTheme.kWhite.withValues(alpha: 179), // Fixed deprecated withOpacity(0.7)
+                          color: AppTheme.kWhite.withOpacity(0.7),
                         ),
                   ),
                 ],
@@ -462,12 +539,29 @@ class _ChatBubble extends StatelessWidget {
   }
 
   Widget _buildAvatar(bool isUser) {
-    return CircleAvatar(
-      radius: 20,
-      backgroundColor: AppTheme.kGray200,
-      child: isUser
-          ? const Icon(Icons.person)
-          : Image.asset('assets/logos/sereni_logo.png', width: 24),
+    return Container(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: CircleAvatar(
+        radius: 20,
+        backgroundColor: AppTheme.kGray200,
+        child: isUser
+            ? const Icon(Icons.person, color: AppTheme.kGray600)
+            : Image.asset(
+                'assets/logos/sereni_logo.png',
+                width: 24,
+                height: 24,
+                fit: BoxFit.contain,
+              ),
+      ),
     );
   }
 }

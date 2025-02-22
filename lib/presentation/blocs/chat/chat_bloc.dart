@@ -29,7 +29,7 @@ class SendMessage extends ChatEvent {
   
   const SendMessage({
     required this.message,
-    required this.chatId,
+    required this.chatId, required bool isUser,
   });
 
   @override
