@@ -1,4 +1,5 @@
 // lib/data/repositories/chat_repository.dart
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../domain/entities/chat.dart';
@@ -21,10 +22,33 @@ class ChatRepository {
   CollectionReference<Map<String, dynamic>> get _chatsCollection =>
       _firestore.collection('users').doc(_auth.currentUser?.uid).collection('chats');
 
+  Future<void> initializeChat(String chatId) async {
+    try {
+      final docRef = _chatsCollection.doc(chatId);
+      final docSnapshot = await docRef.get();
+      
+      if (!docSnapshot.exists) {
+        await docRef.set({
+          'id': chatId,
+          'messages': [],
+          'createdAt': DateTime.now().toIso8601String(),
+          'updatedAt': DateTime.now().toIso8601String(),
+        });
+      }
+    } catch (e) {
+      throw Exception('Failed to initialize chat: $e');
+    }
+  }
+
   Future<List<ChatMessage>> getChatHistory(String chatId) async {
     try {
       final docSnapshot = await _chatsCollection.doc(chatId).get();
-      if (!docSnapshot.exists) return [];
+      
+      if (!docSnapshot.exists) {
+        await initializeChat(chatId);
+        return [];
+      }
+      
       final chatModel = ChatModel.fromMap(docSnapshot.data()!);
       return chatModel.messages.map((msg) => msg.toDomain()).toList();
     } catch (e) {
@@ -34,16 +58,27 @@ class ChatRepository {
 
   Future<void> addMessage(String chatId, ChatMessage message) async {
     try {
-      final docSnapshot = await _chatsCollection.doc(chatId).get();
-      final chatModel = docSnapshot.exists
-          ? ChatModel.fromMap(docSnapshot.data()!)
-          : ChatModel(id: chatId, messages: [], createdAt: DateTime.now());
-
-      final updatedMessages = [...chatModel.messages, ChatMessageModel.fromDomain(message)];
-      await _chatsCollection.doc(chatId).update({
-        'messages': updatedMessages.map((msg) => msg.toMap()).toList(),
-        'updatedAt': DateTime.now().toIso8601String(),
-      });
+      final docRef = _chatsCollection.doc(chatId);
+      final docSnapshot = await docRef.get();
+      
+      if (!docSnapshot.exists) {
+        // Create new chat document with initial message
+        await docRef.set({
+          'id': chatId,
+          'messages': [ChatMessageModel.fromDomain(message).toMap()],
+          'createdAt': DateTime.now().toIso8601String(),
+          'updatedAt': DateTime.now().toIso8601String(),
+        });
+      } else {
+        // Update existing chat document
+        final chatModel = ChatModel.fromMap(docSnapshot.data()!);
+        final updatedMessages = [...chatModel.messages, ChatMessageModel.fromDomain(message)];
+        
+        await docRef.update({
+          'messages': updatedMessages.map((msg) => msg.toMap()).toList(),
+          'updatedAt': DateTime.now().toIso8601String(),
+        });
+      }
     } catch (e) {
       throw Exception('Failed to add message: $e');
     }
@@ -59,7 +94,14 @@ class ChatRepository {
 
   Future<void> clearChat(String chatId) async {
     try {
-      await _chatsCollection.doc(chatId).update({
+      final docRef = _chatsCollection.doc(chatId);
+      final docSnapshot = await docRef.get();
+
+      if (!docSnapshot.exists) {
+        await initializeChat(chatId);
+      }
+
+      await docRef.update({
         'messages': [],
         'updatedAt': DateTime.now().toIso8601String(),
       });
@@ -67,4 +109,10 @@ class ChatRepository {
       throw Exception('Failed to clear chat: $e');
     }
   }
+
+  // Helper method to check if user is authenticated
+  bool get isUserAuthenticated => _auth.currentUser != null;
+
+  // Helper method to get current user ID
+  String? get currentUserId => _auth.currentUser?.uid;
 }

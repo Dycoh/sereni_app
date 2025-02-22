@@ -1,4 +1,4 @@
-// chat_bloc.dart
+// lib/presentation/blocs/chat/chat_bloc.dart
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
@@ -26,14 +26,16 @@ class InitializeChat extends ChatEvent {
 class SendMessage extends ChatEvent {
   final String message;
   final String chatId;
+  final bool isUser;
   
   const SendMessage({
     required this.message,
-    required this.chatId, required bool isUser,
+    required this.chatId,
+    required this.isUser,
   });
 
   @override
-  List<Object> get props => [message, chatId];
+  List<Object> get props => [message, chatId, isUser];
 }
 
 class ReceiveMessage extends ChatEvent {
@@ -120,6 +122,11 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   ) async {
     try {
       emit(ChatLoading());
+      
+      // Initialize the chat document if it doesn't exist
+      await _chatRepository.initializeChat(event.chatId);
+      
+      // Get chat history
       final messages = await _chatRepository.getChatHistory(event.chatId);
       emit(ChatLoaded(messages: messages));
     } catch (e) {
@@ -131,28 +138,35 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     SendMessage event,
     Emitter<ChatState> emit,
   ) async {
+    if (state is! ChatLoaded) return;
+    
     try {
-      if (state is ChatLoaded) {
-        final currentState = state as ChatLoaded;
-        
-        // Create user message
-        final userMessage = ChatMessage(
-          id: _uuid.v4(),
-          content: event.message,
-          timestamp: DateTime.now(),
-          isUser: true,
-        );
+      final currentState = state as ChatLoaded;
+      
+      // Create user message
+      final userMessage = ChatMessage(
+        id: _uuid.v4(),
+        content: event.message,
+        timestamp: DateTime.now(),
+        isUser: true,
+      );
 
-        // Update state with new message and processing indicator
-        emit(currentState.copyWith(
-          messages: [...currentState.messages, userMessage],
-          isProcessing: true,
-        ));
+      // Update state with new message and processing indicator
+      emit(currentState.copyWith(
+        messages: [...currentState.messages, userMessage],
+        isProcessing: true,
+      ));
 
-        // Save message
+      // Save message and handle potential errors
+      try {
         await _chatRepository.addMessage(event.chatId, userMessage);
+      } catch (e) {
+        emit(ChatError(message: 'Failed to save message: ${e.toString()}'));
+        return;
+      }
 
-        // Generate AI response
+      // Generate AI response if message is from user
+      if (event.isUser) {
         try {
           final aiResponse = await _chatRepository.generateAIResponse(event.message);
           final aiMessage = ChatMessage(
@@ -161,13 +175,15 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
             timestamp: DateTime.now(),
             isUser: false,
           );
+          
           add(ReceiveMessage(message: aiMessage, chatId: event.chatId));
         } catch (e) {
+          emit(currentState.copyWith(isProcessing: false));
           emit(ChatError(message: 'Failed to generate AI response: ${e.toString()}'));
         }
       }
     } catch (e) {
-      emit(ChatError(message: 'Failed to send message: ${e.toString()}'));
+      emit(ChatError(message: 'Failed to process message: ${e.toString()}'));
     }
   }
 
@@ -175,21 +191,26 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     ReceiveMessage event,
     Emitter<ChatState> emit,
   ) async {
+    if (state is! ChatLoaded) return;
+    
     try {
-      if (state is ChatLoaded) {
-        final currentState = state as ChatLoaded;
-        
-        // Save AI message
+      final currentState = state as ChatLoaded;
+      
+      // Save AI message with error handling
+      try {
         await _chatRepository.addMessage(event.chatId, event.message);
-
-        // Update state with new message and remove processing indicator
-        emit(currentState.copyWith(
-          messages: [...currentState.messages, event.message],
-          isProcessing: false,
-        ));
+      } catch (e) {
+        emit(ChatError(message: 'Failed to save AI response: ${e.toString()}'));
+        return;
       }
+
+      // Update state with new message and remove processing indicator
+      emit(currentState.copyWith(
+        messages: [...currentState.messages, event.message],
+        isProcessing: false,
+      ));
     } catch (e) {
-      emit(ChatError(message: 'Failed to receive message: ${e.toString()}'));
+      emit(ChatError(message: 'Failed to process AI response: ${e.toString()}'));
     }
   }
 

@@ -1,8 +1,7 @@
-    import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
-import 'package:google_generative_ai/google_generative_ai.dart';
 import '../../app/routes.dart';
 import '../../app/theme/theme.dart';
 import '../../domain/entities/chat.dart';
@@ -22,28 +21,16 @@ class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final String _chatId = const Uuid().v4();
-  late GenerativeModel _geminiModel;
-  late ChatSession _chatSession;
   late stt.SpeechToText _speech;
   bool _isRecording = false;
   final bool _isVoiceAvailable = true;
   bool _isSidePanelOpen = true;
-  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _initializeGemini();
     _initializeSpeechToText();
     context.read<ChatBloc>().add(InitializeChat(chatId: _chatId));
-  }
-
-  Future<void> _initializeGemini() async {
-    _geminiModel = GenerativeModel(
-      model: 'gemini-pro',
-      apiKey: 'gemini api key',
-    );
-    _chatSession = _geminiModel.startChat();
   }
 
   Future<void> _initializeSpeechToText() async {
@@ -75,32 +62,14 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<void> _handleSendMessage() async {
     final message = _messageController.text.trim();
     if (message.isNotEmpty) {
-      setState(() => _isLoading = true);
-      
       context.read<ChatBloc>().add(SendMessage(
         message: message,
         chatId: _chatId,
-        isUser: false,
+        isUser: true,
       ));
-
-      try {
-        final response = await _chatSession.sendMessage(Content.text(message));
-        final geminiResponse = response.text ?? "I couldn't process that request.";
-        
-        context.read<ChatBloc>().add(SendMessage(
-          message: geminiResponse,
-          chatId: _chatId,
-          isUser: false,
-        ));
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
-        );
-      } finally {
-        setState(() => _isLoading = false);
-        _messageController.clear();
-        _scrollToBottom();
-      }
+      
+      _messageController.clear();
+      _scrollToBottom();
     }
   }
 
@@ -126,6 +95,10 @@ class _ChatScreenState extends State<ChatScreen> {
         await _handleSendMessage();
       }
     }
+  }
+
+  Future<void> _handleClearChat() async {
+    context.read<ChatBloc>().add(ClearChat(chatId: _chatId));
   }
 
   @override
@@ -252,7 +225,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           ),
                           const SizedBox(height: AppTheme.kSpacing),
                           ElevatedButton(
-                            onPressed: () {},
+                            onPressed: _handleClearChat,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppTheme.kGray200,
                               foregroundColor: AppTheme.kTextBrown,
@@ -295,12 +268,19 @@ class _ChatScreenState extends State<ChatScreen> {
                       _buildInputArea(contentWidth),
                     ],
                   ),
-                  if (_isLoading)
-                    const Center(
-                      child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(AppTheme.kPrimaryGreen),
-                      ),
-                    ),
+                  BlocBuilder<ChatBloc, ChatState>(
+                    builder: (context, state) {
+                      if (state is ChatLoaded && state.isProcessing) {
+                        return const Center(
+                          child: CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                                AppTheme.kPrimaryGreen),
+                          ),
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    },
+                  ),
                 ],
               ),
             ),
@@ -351,31 +331,31 @@ class _ChatScreenState extends State<ChatScreen> {
             if (state is ChatLoaded && state.messages.isNotEmpty) {
               WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
             }
+            if (state is ChatError) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(state.message)),
+              );
+            }
           },
           builder: (context, state) {
-            return ListView(
-              controller: _scrollController,
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppTheme.kSpacing2x,
-                vertical: AppTheme.kSpacing,
-              ),
-              children: [
-                _ChatBubble(
-                  message: ChatMessage(
-                    id: 'placeholder-1',
-                    content: "Hi there! How are you feeling today?",
-                    timestamp: DateTime.now().subtract(const Duration(minutes: 5)),
-                    isUser: false,
-                  ),
-                  isUser: false,
+            if (state is ChatLoaded) {
+              return ListView.builder(
+                controller: _scrollController,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppTheme.kSpacing2x,
+                  vertical: AppTheme.kSpacing,
                 ),
-                if (state is ChatLoaded)
-                  ...state.messages.map((message) => _ChatBubble(
-                        message: message,
-                        isUser: message.isUser,
-                      )),
-              ],
-            );
+                itemCount: state.messages.length,
+                itemBuilder: (context, index) {
+                  final message = state.messages[index];
+                  return _ChatBubble(
+                    message: message,
+                    isUser: message.isUser,
+                  );
+                },
+              );
+            }
+            return const Center(child: CircularProgressIndicator());
           },
         ),
       ),
@@ -442,7 +422,7 @@ class _ChatScreenState extends State<ChatScreen> {
         decoration: BoxDecoration(
           color: _isRecording ? AppTheme.kErrorRed : AppTheme.kAccentBrown,
           shape: BoxShape.circle,
-          ),
+        ),
         child: Icon(
           _isRecording ? Icons.mic : Icons.mic_none,
           color: AppTheme.kWhite,
@@ -465,7 +445,6 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 }
-
 class _ChatBubble extends StatelessWidget {
   final ChatMessage message;
   final bool isUser;
