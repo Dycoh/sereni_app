@@ -1,11 +1,28 @@
-//lib/presentation/screens/welcome_Screen.dart
+// Path: lib/presentation/screens/welcome_screen.dart
 
+// Author: Dycoh Gacheri (https://github.com/Dycoh)
+// Description: Welcome screen that displays an introduction to Sereni with animated text
+// and transitions to the onboarding flow. Uses standardized AppScaffold for consistent
+// layout structure while maintaining responsive behavior.
+
+// Last Modified: Monday, 24 February 2025 16:35
+
+// Core/Framework imports
 import 'package:flutter/material.dart';
 import 'dart:async';
-import '../../../app/theme.dart';
-import '../../../presentation/screens/onboarding_screen.dart';
-import '../../../app/scaffold.dart'; // Import the AppScaffold
 
+// Project imports - Theme
+import '../../../app/theme.dart';
+
+// Project imports - Navigation
+import '../../../presentation/screens/onboarding_screen.dart';
+
+// Project imports - Layout
+import '../../../app/scaffold.dart';
+import '../../../shared/layout/app_layout.dart'; // Import for LayoutType enum
+
+/// Welcome screen that displays an animated introduction to Sereni
+/// with a typewriter text effect and responsive layout.
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
 
@@ -14,19 +31,33 @@ class WelcomeScreen extends StatefulWidget {
 }
 
 class _WelcomeScreenState extends State<WelcomeScreen> {
-  // Asset paths for images and content
+  // Asset paths
   static const String _gifPath = 'assets/gifs/welcome_sereni_bot.gif';
   static const String _logoPath = 'assets/logos/sereni_logo.png';
+  
+  // Content constants
   static const String _fullTitle = "Hello. I'm Sereni ...";
   static const String _fullSubtitle = "Your dedicated companion for mental wellness. I'm here to help you track your moods, capture your thoughts, and discover useful insights along the way.";
   
   // Animation state variables
   String _currentTitle = '';
   String _currentSubtitle = '';
+  // ignore: unused_field
   bool _titleComplete = false;
   bool _subtitleComplete = false;
-  late Timer _titleTimer;
-  late Timer _subtitleTimer;
+  
+  // Animation controller
+  // ignore: unused_field
+  late AnimationController _titleAnimationController;
+  // ignore: unused_field
+  late AnimationController _subtitleAnimationController;
+  
+  // Configuration parameters
+  static const double _breakpoint = 800.0;
+  
+  // Improved animation speeds (doubled)
+  static const Duration _titleTypingInterval = Duration(milliseconds: 25); // from 50ms
+  static const Duration _subtitleTypingInterval = Duration(milliseconds: 10); // from 20ms
   
   @override
   void initState() {
@@ -36,11 +67,14 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   }
   
   /// Animates the title text letter by letter with a typewriter effect
+  /// Using a more efficient implementation with fewer setState calls
   void _startTitleAnimation() {
-    _titleTimer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
-      if (_currentTitle.length < _fullTitle.length) {
+    int charIndex = 0;
+    Timer.periodic(_titleTypingInterval, (timer) {
+      charIndex++;
+      if (charIndex <= _fullTitle.length) {
         setState(() {
-          _currentTitle = _fullTitle.substring(0, _currentTitle.length + 1);
+          _currentTitle = _fullTitle.substring(0, charIndex);
         });
       } else {
         timer.cancel();
@@ -54,14 +88,25 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   }
   
   /// Animates the subtitle text letter by letter with a typewriter effect
-  /// Runs faster than the title animation for better user experience
+  /// Using batch updates to improve efficiency
   void _startSubtitleAnimation() {
-    _subtitleTimer = Timer.periodic(const Duration(milliseconds: 20), (timer) {
-      if (_currentSubtitle.length < _fullSubtitle.length) {
+    int charIndex = 0;
+    // Calculate characters to add per frame for smoother animation
+    const int charsPerFrame = 2; // Add 2 characters per frame for efficiency
+    
+    Timer.periodic(_subtitleTypingInterval, (timer) {
+      charIndex += charsPerFrame;
+      if (charIndex <= _fullSubtitle.length) {
         setState(() {
-          _currentSubtitle = _fullSubtitle.substring(0, _currentSubtitle.length + 1);
+          _currentSubtitle = _fullSubtitle.substring(0, charIndex);
         });
       } else {
+        // Ensure we display the complete text
+        if (_currentSubtitle.length < _fullSubtitle.length) {
+          setState(() {
+            _currentSubtitle = _fullSubtitle;
+          });
+        }
         timer.cancel();
         setState(() {
           _subtitleComplete = true;
@@ -72,173 +117,126 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   
   @override
   void dispose() {
-    // Clean up timers to prevent memory leaks
-    _titleTimer.cancel();
-    if (_titleComplete) {
-      _subtitleTimer.cancel();
-    }
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    // Use AppScaffold instead of custom Scaffold implementation
     return AppScaffold(
-      // No title needed for welcome screen
-      currentRoute: '/', // Assuming welcome screen is the root route
-      useBackgroundDecorator: true, // Use the background decoration from AppScaffold
+      currentRoute: '/', // Root route for welcome screen
+      useBackgroundDecorator: true,
       backgroundColor: AppTheme.kBackgroundColor,
+      showNavigation: false, // No navigation needed for welcome screen
       // No app bar needed for welcome screen
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(0), // Zero height app bar
-        child: Container(), // Empty container as we don't need an app bar
+        preferredSize: const Size.fromHeight(0),
+        child: Container(),
       ),
-      // Main body content with responsive layout
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final isWideScreen = constraints.maxWidth > 800;
-            
-            return isWideScreen 
-              ? _buildWideScreenLayout(constraints)
-              : _buildNarrowScreenLayout(constraints);
-          },
-        ),
-      ),
+      // Using splitVertical layout with gif on left, content on right
+      layoutType: LayoutType.splitVertical,
+      breakpoint: _breakpoint,
+      // Let the AppLayoutManager handle the content width fraction
+      // based on screen size (0.9 for mobile, 0.8 for desktop)
+      contentPadding: const EdgeInsets.all(16),
+      // The main body content will appear on the right side on wide screens
+      body: _buildContentSection(),
+      // The panels array contains the left content (gif)
+      panels: [_buildGifSection()],
     );
   }
 
-  /// Builds a side-by-side layout for wider screens (tablets, desktops)
-  /// Places the animation gif on the left and content on the right
-  Widget _buildWideScreenLayout(BoxConstraints constraints) {
-    // Calculate appropriate spacing for wide layout
-    final sidePadding = constraints.maxWidth * 0.1; // 10% padding on sides
-    final gutterWidth = constraints.maxWidth * 0.05; // 5% gutter between columns
-    
-    return Row(
-      children: [
-        Expanded(
-          flex: 6,
-          child: Center(
-            child: SizedBox(
-              height: constraints.maxHeight * 0.8,
-              width: constraints.maxWidth * 0.4, // 40% of screen width for image
-              child: Image.asset(
-                _gifPath,
-                fit: BoxFit.contain,
-              ),
-            ),
-          ),
-        ),
-        SizedBox(width: gutterWidth), // Gutter space between columns
-        Expanded(
-          flex: 6,
-          child: Center(
-            child: SizedBox(
-              height: constraints.maxHeight * 0.8,
-              width: constraints.maxWidth * 0.4, // 40% of screen width for content
-              child: _buildContentSection(isWideScreen: true),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// Builds a stacked layout for narrower screens (mobile devices)
-  /// Places the animation gif above the content
-  Widget _buildNarrowScreenLayout(BoxConstraints constraints) {
-    return SingleChildScrollView(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          SizedBox(height: AppTheme.kSpacing4x), // Top spacing
-          SizedBox(
-            height: constraints.maxHeight * 0.4,
-            width: constraints.maxWidth * 0.8, // 80% of screen width
+  /// Builds the animated GIF section that appears on the left (wide screens)
+  /// or top (narrow screens)
+  Widget _buildGifSection() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Center(
+          child: Container(
+            constraints: const BoxConstraints(maxHeight: 400),
+            padding: const EdgeInsets.all(AppTheme.kSpacing4x),
             child: Image.asset(
               _gifPath,
               fit: BoxFit.contain,
             ),
           ),
-          SizedBox(height: AppTheme.kSpacing4x), // Spacing between image and content
-          SizedBox(
-            width: constraints.maxWidth * 0.8, // 80% of screen width
-            child: _buildContentSection(isWideScreen: false),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
   /// Builds the main content section with title, subtitle, and button
-  /// Adapts layout based on screen size
-  Widget _buildContentSection({required bool isWideScreen}) {
-    return Padding(
-      padding: EdgeInsets.only(top: isWideScreen ? AppTheme.kSpacing8x : AppTheme.kSpacing4x),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Only show logo on wide screens
-            if (isWideScreen) ...[
-              SizedBox(
-                height: 48,
-                child: Image.asset(
-                  _logoPath,
-                  fit: BoxFit.contain,
-                  alignment: Alignment.centerLeft,
+  Widget _buildContentSection() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Check if we're in a wide screen layout
+        final isWideScreen = constraints.maxWidth > _breakpoint / 2;
+        
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(AppTheme.kSpacing4x),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Only show logo on wide screens
+              if (isWideScreen) ...[
+                SizedBox(
+                  height: 48,
+                  child: Image.asset(
+                    _logoPath,
+                    fit: BoxFit.contain,
+                    alignment: Alignment.centerLeft,
+                  ),
+                ),
+                const SizedBox(height: AppTheme.kSpacing4x),
+              ],
+              
+              // Animated title text with typewriter effect
+              Text(
+                _currentTitle,
+                style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                  color: AppTheme.kTextBrown,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 48,
+                ),
+                textAlign: TextAlign.left,
+              ),
+              const SizedBox(height: AppTheme.kSpacing2x),
+              
+              // Decorative divider line
+              Container(
+                width: 180,
+                height: 3,
+                decoration: BoxDecoration(
+                  color: AppTheme.kPrimaryGreen.withAlpha(128),
+                  borderRadius: BorderRadius.circular(1.5),
                 ),
               ),
-              SizedBox(height: AppTheme.kSpacing4x),
+              const SizedBox(height: AppTheme.kSpacing3x),
+              
+              // Animated subtitle text with typewriter effect
+              Text(
+                _currentSubtitle,
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  color: AppTheme.kTextBrown,
+                  fontWeight: FontWeight.w300,
+                  fontSize: 16,
+                ),
+                textAlign: TextAlign.left,
+              ),
+              const SizedBox(height: AppTheme.kSpacing6x),
+              
+              // Button that fades in after subtitle animation completes
+              AnimatedOpacity(
+                opacity: _subtitleComplete ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 500),
+                child: _buildGetStartedButton(),
+              ),
+              const SizedBox(height: AppTheme.kSpacing4x),
             ],
-            
-            // Animated title text with typewriter effect
-            Text(
-              _currentTitle,
-              style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                color: AppTheme.kTextBrown,
-                fontWeight: FontWeight.w800,
-                fontSize: 48,
-              ),
-              textAlign: TextAlign.left,
-            ),
-            SizedBox(height: AppTheme.kSpacing2x),
-            
-            // Decorative divider line
-            Container(
-              width: 180,
-              height: 3,
-              decoration: BoxDecoration(
-                color: AppTheme.kPrimaryGreen.withOpacity(0.5),
-                borderRadius: BorderRadius.circular(1.5),
-              ),
-            ),
-            SizedBox(height: AppTheme.kSpacing3x),
-            
-            // Animated subtitle text with typewriter effect
-            Text(
-              _currentSubtitle,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: AppTheme.kTextBrown,
-                fontWeight: FontWeight.w300,
-                fontSize: 16,
-              ),
-              textAlign: TextAlign.left,
-            ),
-            SizedBox(height: AppTheme.kSpacing6x),
-            
-            // Button that fades in after subtitle animation completes
-            AnimatedOpacity(
-              opacity: _subtitleComplete ? 1.0 : 0.0,
-              duration: const Duration(milliseconds: 500),
-              child: _buildGetStartedButton(),
-            ),
-            SizedBox(height: AppTheme.kSpacing4x),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -252,7 +250,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         style: ElevatedButton.styleFrom(
           backgroundColor: AppTheme.kAccentBrown,
           foregroundColor: AppTheme.kWhite,
-          padding: EdgeInsets.symmetric(
+          padding: const EdgeInsets.symmetric(
             horizontal: AppTheme.kSpacing4x,
             vertical: AppTheme.kSpacing2x,
           ),
@@ -265,12 +263,13 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
             horizontal: AppTheme.kSpacing,
             vertical: AppTheme.kSpacing,
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('Get Started'),
-              const SizedBox(width: 8),
-              const Icon(Icons.arrow_forward, size: 18, color: AppTheme.kWhite),
+          // Fix: Use Wrap instead of Row to prevent overflow
+          child: Wrap(
+            spacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: const [
+              Text('Get Started'),
+              Icon(Icons.arrow_forward, size: 18, color: AppTheme.kWhite),
             ],
           ),
         ),
