@@ -3,7 +3,7 @@ import 'package:sereni_app/presentation/screens/chat_screen.dart';
 import 'package:sereni_app/presentation/screens/insights_screen.dart';
 import 'package:sereni_app/presentation/screens/journal_screen.dart';
 import 'package:sereni_app/presentation/screens/profile_screen.dart';
-import '../../app/theme/theme.dart';
+import '../../app/theme.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import '../widgets/psych_score_chart.dart';
 import '../widgets/mood_selector.dart';

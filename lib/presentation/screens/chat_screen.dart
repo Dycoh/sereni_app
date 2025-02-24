@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import '../../app/routes.dart';
-import '../../app/theme/theme.dart';
+import '../../app/theme.dart';
 import '../../domain/entities/chat.dart';
 import '../../presentation/blocs/chat/chat_bloc.dart';
 import '../widgets/navigation_widget.dart';

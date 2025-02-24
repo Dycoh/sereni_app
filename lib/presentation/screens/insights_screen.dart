@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sereni_app/app/theme/theme.dart';
+import 'package:sereni_app/app/theme.dart';
 import 'package:sereni_app/app/routes.dart';
 import 'package:sereni_app/presentation/widgets/navigation_widget.dart';
 

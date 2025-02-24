@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'dart:async';
-import '../../app/theme/theme.dart';
+import '../../app/theme.dart';
 import 'onboarding_screen.dart';
 import '../../presentation/widgets/background_decorator_widget.dart';
 

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../app/theme/theme.dart';
+import '../../app/theme.dart';
 import 'home_screen.dart';
 import 'signin_screen.dart';
 import '../widgets/custom_appbar_widget.dart';

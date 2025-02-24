@@ -1,7 +1,7 @@
 // lib/presentation/screens/onboarding_screen.dart
 
 import 'package:flutter/material.dart';
-import '../../app/theme/theme.dart';
+import '../../app/theme.dart';
 import '../../app/routes.dart';
 import '../../presentation/widgets/background_decorator_widget.dart';
 

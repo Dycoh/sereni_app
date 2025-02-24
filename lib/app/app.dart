@@ -7,7 +7,7 @@ import '../presentation/screens/splash_screen.dart';
 import '../presentation/screens/welcome_screen.dart';
 import '../presentation/screens/home_screen.dart';
 
-import 'theme/theme.dart';
+import 'theme.dart';
 import 'routes.dart';
 
 class SereniApp extends StatefulWidget {

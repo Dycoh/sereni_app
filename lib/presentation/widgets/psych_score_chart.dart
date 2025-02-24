@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
-import '../../app/theme/theme.dart';
+import '../../app/theme.dart';
 
 class PsychScoreChart extends StatelessWidget {
   final int score;

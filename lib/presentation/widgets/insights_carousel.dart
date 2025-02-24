@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import '../../app/theme/theme.dart';
+import '../../app/theme.dart';
 
 class InsightsCarousel extends StatefulWidget {
   final List<InsightCard> insights;

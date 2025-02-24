@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
-import 'package:sereni_app/app/theme/theme.dart';
+import 'package:sereni_app/app/theme.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:easy_localization/easy_localization.dart';

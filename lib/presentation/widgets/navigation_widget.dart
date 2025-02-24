@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
-import '../../app/theme/theme.dart';
+import '../../app/theme.dart';
 import '../../app/routes.dart';
 
 class CustomScaffold extends StatefulWidget {

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../app/theme/theme.dart';
+import '../../app/theme.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String? title;

@@ -1,66 +1,73 @@
-// lib/presesntation/widgets/background_decorator_widget.dart
+// lib/presentation/widgets/app_background.dart
 
 import 'package:flutter/material.dart';
 import '../../app/theme.dart';
 
-class BackgroundDecorator extends StatelessWidget {
+/// A widget that adds decorative background elements to the app's screens.
+/// Creates circular decorations that adapt to screen size and orientation.
+class AppBackground extends StatelessWidget {
   final Widget child;
 
-  const BackgroundDecorator({
+  const AppBackground({
     Key? key,
     required this.child,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    // Get screen dimensions and orientation
     final Size screenSize = MediaQuery.of(context).size;
     final bool isLandscape = MediaQuery.of(context).orientation == Orientation.landscape ||
         screenSize.width > 600;
 
-    // Calculate main circle size
+    // Calculate circle sizes based on screen dimensions
+    // Main circle: 60% of screen width/height depending on orientation
     double mainCircleSize = isLandscape
         ? screenSize.height * 0.6
         : screenSize.width * 0.6;
 
-    // Adjust size for smaller screens (reduce to half or 3/4)
+    // Adjust main circle size for smaller screens
     if (!isLandscape && screenSize.width <= 600) {
-      mainCircleSize *= 0.5; // Reduce to half for small screens
+      mainCircleSize *= 0.5;
     }
-    
-    // Make the bottom circle about 1/3 the size of the main circle
+
+    // Small circle: 1/3 of main circle size
     final double smallCircleSize = mainCircleSize * 0.33;
 
     return Stack(
       fit: StackFit.expand,
       children: [
-        // Main circle background at top-right (moved down by 7.5% of screen height)
+        // Main circle in top-right corner
         Positioned(
-          top: screenSize.height * 0.075,
-          right: -mainCircleSize / 4,
+          top: screenSize.height * 0.075,  // Offset from top by 7.5% of screen height
+          right: -mainCircleSize / 4,      // Partially off-screen
           child: Container(
             width: mainCircleSize,
             height: mainCircleSize,
             decoration: BoxDecoration(
+              // Adjust opacity based on screen size
               color: AppTheme.kPrimaryGreen.withOpacity(isLandscape ? 0.1 : 0.025),
               shape: BoxShape.circle,
             ),
           ),
         ),
-        // Small circle at bottom-left (only visible on larger screens)
+        
+        // Small circle in bottom-left corner (only on larger screens)
         if (isLandscape || screenSize.width > 600)
           Positioned(
-            bottom: -smallCircleSize / 2,
-            left: -smallCircleSize / 4,
+            bottom: -smallCircleSize / 2,  // Partially off-screen
+            left: -smallCircleSize / 4,    // Partially off-screen
             child: Container(
               width: smallCircleSize,
               height: smallCircleSize,
               decoration: BoxDecoration(
-                color: AppTheme.kPrimaryGreen.withOpacity(0.3), // Slightly less transparent
+                color: AppTheme.kPrimaryGreen.withOpacity(0.3),
                 shape: BoxShape.circle,
               ),
             ),
           ),
-        // Main content
+          
+        // Main content on top of background
         child,
       ],
     );

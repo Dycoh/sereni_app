@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../app/theme/theme.dart';
+import '../../app/theme.dart';
 import 'home_screen.dart';
 import 'signup_screen.dart';
 import '../widgets/background_decorator_widget.dart';

@@ -1,6 +1,6 @@
 // lib/widgets/common/profile_image_picker.dart
 import 'package:flutter/material.dart';
-import '../../app/theme/theme.dart';
+import '../../app/theme.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 

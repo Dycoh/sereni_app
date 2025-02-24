@@ -7,7 +7,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 
-import 'package:sereni_app/app/theme/theme.dart';
+import 'package:sereni_app/app/theme.dart';
 import 'package:sereni_app/app/routes.dart';
 import 'package:sereni_app/presentation/widgets/navigation_widget.dart';
 

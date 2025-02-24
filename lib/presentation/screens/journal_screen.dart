@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../app/theme/theme.dart';
+import '../../app/theme.dart';
 import '../widgets/navigation_widget.dart';
 import '../widgets/background_decorator_widget.dart';
 import '../../app/routes.dart';
