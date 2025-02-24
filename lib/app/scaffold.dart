@@ -1,9 +1,9 @@
-// lib/presentation/widgets/app_scaffold.dart
+// lib/shared/widgets/app_scaffold.dart
 
 import 'package:flutter/material.dart';
-import '../../app/theme.dart';
-import 'app_navigation.dart';
-import 'app_background.dart';
+import 'theme.dart';
+import '../shared/widgets/app_navigation.dart';
+import '../shared/widgets/app_background.dart';
 
 /// A customizable scaffold widget that provides a consistent layout structure across the app.
 /// Handles responsive behavior, navigation, and background decoration.

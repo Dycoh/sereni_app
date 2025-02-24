@@ -1,4 +1,4 @@
-// lib/presentation/widgets/app_navigation.dart
+// lib/shared/widgets/app_navigation.dart
 
 import 'package:flutter/material.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../app/theme.dart';
+import 'theme.dart';
 // import 'onboarding_screen.dart';
 // import 'signin_screen.dart';
 

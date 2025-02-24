@@ -1,4 +1,4 @@
-// lib/presentation/widgets/app_background.dart
+// lib/shared/widgets/app_background.dart
 
 import 'package:flutter/material.dart';
 import '../../app/theme.dart';

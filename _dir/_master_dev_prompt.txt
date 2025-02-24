@@ -1,0 +1,36 @@
+instructions for individual file development/improvement
+
+- at the top of the file, have three comment blocks in this format
+
+1. the file path. example (//lib/presentation/screens/welcome_Screen.dart
+)
+
+2. a) author. default to Dycoh Gacheri (https://github.com/Dycoh)
+b)description of the file and what it does. example (/// A customizable scaffold widget that provides a consistent layout structure across the app.
+/// this file does a...b....c...d)
+
+3. timestamp for the actual time for code modification. example (Last Modified : Monday 24 February 2025 16:35)... always apply the right timestamp as of generation of the file
+
+- after these, organize all imports, group them accordingly, such like "//repository imports" "//main imports" "//bloc imports" etc
+
+- after those, if the file makes use of any files/assets, have a block (maybe withint the main class) that defines the asset paths, or variables. example (class _WelcomeScreenState extends State<WelcomeScreen> {
+  // Asset paths for images and content
+  static const String _gifPath = 'assets/gifs/welcome_sereni_bot.gif';
+  static const String _logoPath = 'assets/logos/sereni_logo.png';
+  static const String _fullTitle = "Hello. I'm Sereni ...";
+  static const String _fullSubtitle = "Your dedicated companion for mental wellness. I'm here to help you track your moods, capture your thoughts, and discover useful insights along the way.";
+  
+  // Animation state variables
+  String _currentTitle = '';
+  String _currentSubtitle = '';
+  bool _titleComplete = false;
+  bool _subtitleComplete = false;
+  late Timer _titleTimer;
+  late Timer _subtitleTimer;
+)
+
+- always have elaborate, simple and clear inline comments that are helpful to anyone who may need to understand, debug or review the code
+
+- with every iteration, please provide the user with the complete updated code, with all the elements defined above, formatted in the right way. with all the logic, layout and comments (improve comments where necessary), logic and functionality kept intact, unless specified otherwise by the user. provide the full code so that the user copies and replaces it in whole with the original, don't just give parts of the code.
+
+- make improvements, and recommendations on best practices and/or how the implementations may be improved or made more effecient. identify and point out potential blind spots and contingencies (keep this brief as the main request to be fulfilled would be defined by the user)
