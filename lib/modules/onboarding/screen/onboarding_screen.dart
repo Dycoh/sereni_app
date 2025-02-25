@@ -1,9 +1,9 @@
-// lib/presentation/screens/onboarding_screen.dart
+// lib/modules/onboarding/screen/onboarding_screen.dart
 
 import 'package:flutter/material.dart';
-import '../../app/theme.dart';
-import '../../app/routes.dart';
-import '../../presentation/widgets/background_decorator_widget.dart';
+import '../../../app/theme.dart';
+import '../../../app/routes.dart';
+import '../../../presentation/widgets/background_decorator_widget.dart';
 
 class AssetPaths {
   static const String nameBot = 'assets/gifs/onboarding_name_bot.gif';

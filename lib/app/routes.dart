@@ -7,7 +7,7 @@ import 'splash.dart';
 import '../modules/welcome/screen/welcome_screen.dart';
 import '../presentation/screens/signup_screen.dart';
 import '../presentation/screens/signin_screen.dart';
-import '../presentation/screens/onboarding_screen.dart';
+import '../modules/onboarding/screen/onboarding_screen.dart';
 import '../presentation/screens/home_screen.dart';
 import '../presentation/screens/journal_screen.dart';
 import '../presentation/screens/chat_screen.dart';

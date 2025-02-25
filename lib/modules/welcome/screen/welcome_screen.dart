@@ -15,7 +15,7 @@ import 'dart:async';
 import '../../../app/theme.dart';
 
 // Project imports - Navigation
-import '../../../presentation/screens/onboarding_screen.dart';
+import '../../onboarding/screen/onboarding_screen.dart';
 
 // Project imports - Layout
 import '../../../app/scaffold.dart';
