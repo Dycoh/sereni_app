@@ -16,6 +16,7 @@ import 'package:equatable/equatable.dart';
 // Project imports - Models
 import '../models/onboarding_data.dart';
 
+
 // Events
 abstract class OnboardingEvent extends Equatable {
   const OnboardingEvent();

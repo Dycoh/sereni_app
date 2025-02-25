@@ -1,0 +1,1970 @@
+// Path: lib/modules/user_profile/models/user_profile.dart
+
+// Author: Dycoh Gacheri (https://github.com/Dycoh)
+// Description: Comprehensive user profile model that includes personal information
+// and serves as the central source of truth for user identity data.
+
+// Last Modified: Tuesday, 25 February 2025 16:35
+
+// Core/Framework imports
+import 'package:equatable/equatable.dart';
+
+// Project imports - Models
+import '../../onboarding/models/onboarding_data.dart';
+
+/// Represents a user's complete profile information
+class UserProfile extends Equatable {
+  // Personal identifiers
+  final String? id;
+  final String? name;
+  final String? email;
+  final String? phoneNumber;
+  
+  // Demographics
+  final String? gender;
+  final double age;
+  final DateTime? dateOfBirth;
+  
+  // Profile data
+  final String? avatarUrl;
+  final String? bio;
+  
+  // Status information
+  final DateTime? lastActive;
+  final DateTime createdAt;
+  final bool isOnboardingComplete;
+
+  /// Creates an immutable [UserProfile] instance
+  const UserProfile({
+    this.id,
+    this.name,
+    this.email,
+    this.phoneNumber,
+    this.gender,
+    this.age = 25.0,
+    this.dateOfBirth,
+    this.avatarUrl,
+    this.bio,
+    this.lastActive,
+    DateTime? createdAt,
+    this.isOnboardingComplete = false,
+  }) : createdAt = createdAt ?? DateTime.now();
+  
+  /// Creates a copy of this [UserProfile] with the given fields replaced with new values
+  UserProfile copyWith({
+    String? id,
+    String? name,
+    String? email,
+    String? phoneNumber,
+    String? gender,
+    double? age,
+    DateTime? dateOfBirth,
+    String? avatarUrl,
+    String? bio,
+    DateTime? lastActive,
+    DateTime? createdAt,
+    bool? isOnboardingComplete,
+  }) {
+    return UserProfile(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      email: email ?? this.email,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
+      gender: gender ?? this.gender,
+      age: age ?? this.age,
+      dateOfBirth: dateOfBirth ?? this.dateOfBirth,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      bio: bio ?? this.bio,
+      lastActive: lastActive ?? this.lastActive,
+      createdAt: createdAt ?? this.createdAt,
+      isOnboardingComplete: isOnboardingComplete ?? this.isOnboardingComplete,
+    );
+  }
+  
+  /// Returns whether essential profile information is complete
+  bool get isProfileComplete =>
+      name != null &&
+      name!.isNotEmpty &&
+      gender != null;
+  
+  /// Factory method to create a UserProfile from OnboardingData
+  factory UserProfile.fromOnboardingData(OnboardingData data) {
+    return UserProfile(
+      name: data.name,
+      gender: data.gender,
+      age: data.age,
+      isOnboardingComplete: data.isComplete,
+    );
+  }
+  
+  /// Map representation of the profile for serialization
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'name': name,
+      'email': email,
+      'phoneNumber': phoneNumber,
+      'gender': gender,
+      'age': age,
+      'dateOfBirth': dateOfBirth?.toIso8601String(),
+      'avatarUrl': avatarUrl,
+      'bio': bio,
+      'lastActive': lastActive?.toIso8601String(),
+      'createdAt': createdAt.toIso8601String(),
+      'isOnboardingComplete': isOnboardingComplete,
+    };
+  }
+  
+  /// Factory constructor to create a UserProfile from a map
+  factory UserProfile.fromMap(Map<String, dynamic> map) {
+    return UserProfile(
+      id: map['id'],
+      name: map['name'],
+      email: map['email'],
+      phoneNumber: map['phoneNumber'],
+      gender: map['gender'],
+      age: map['age'] ?? 25.0,
+      dateOfBirth: map['dateOfBirth'] != null 
+          ? DateTime.parse(map['dateOfBirth']) 
+          : null,
+      avatarUrl: map['avatarUrl'],
+      bio: map['bio'],
+      lastActive: map['lastActive'] != null 
+          ? DateTime.parse(map['lastActive']) 
+          : null,
+      createdAt: map['createdAt'] != null 
+          ? DateTime.parse(map['createdAt']) 
+          : DateTime.now(),
+      isOnboardingComplete: map['isOnboardingComplete'] ?? false,
+    );
+  }
+  
+  @override
+  List<Object?> get props => [
+    id, name, email, phoneNumber, gender, age, 
+    dateOfBirth, avatarUrl, bio, lastActive, 
+    createdAt, isOnboardingComplete
+  ];
+  
+  @override
+  String toString() => 'UserProfile(id: $id, name: $name, email: $email, '
+      'gender: $gender, age: $age, isOnboardingComplete: $isOnboardingComplete)';
+}
+
+// Path: lib/modules/user_profile/models/user_preferences.dart
+
+// Author: Dycoh Gacheri (https://github.com/Dycoh)
+// Description: Model for storing all user configurable preferences including
+// app appearance, notification settings, and feature preferences.
+
+// Last Modified: Tuesday, 25 February 2025 16:35
+
+// Core/Framework imports
+import 'package:equatable/equatable.dart';
+
+/// Represents all user-configurable preferences in the application
+class UserPreferences extends Equatable {
+  // Theme preferences
+  final String themeMode; // 'light', 'dark', 'system'
+  final bool useHighContrast;
+  final String accentColor;
+  
+  // Notification preferences
+  final bool enablePushNotifications;
+  final bool enableEmailNotifications;
+  final bool enableSoundEffects;
+  final bool enableVibration;
+  
+  // Privacy preferences
+  final bool shareUsageData;
+  final bool allowLocationTracking;
+  
+  // App behavior preferences
+  final String defaultLanguage;
+  final bool enableAutoSave;
+  final int dataRefreshInterval; // in minutes
+  
+  // Feature preferences
+  final Map<String, bool> featureToggles;
+
+  /// Creates an immutable [UserPreferences] instance with default values
+  const UserPreferences({
+    this.themeMode = 'system',
+    this.useHighContrast = false,
+    this.accentColor = 'green',
+    this.enablePushNotifications = true,
+    this.enableEmailNotifications = true,
+    this.enableSoundEffects = true,
+    this.enableVibration = true,
+    this.shareUsageData = false,
+    this.allowLocationTracking = false,
+    this.defaultLanguage = 'en',
+    this.enableAutoSave = true,
+    this.dataRefreshInterval = 15,
+    this.featureToggles = const {},
+  });
+
+  /// Creates a copy of this [UserPreferences] with the given fields replaced
+  UserPreferences copyWith({
+    String? themeMode,
+    bool? useHighContrast,
+    String? accentColor,
+    bool? enablePushNotifications,
+    bool? enableEmailNotifications,
+    bool? enableSoundEffects,
+    bool? enableVibration,
+    bool? shareUsageData,
+    bool? allowLocationTracking,
+    String? defaultLanguage,
+    bool? enableAutoSave,
+    int? dataRefreshInterval,
+    Map<String, bool>? featureToggles,
+  }) {
+    return UserPreferences(
+      themeMode: themeMode ?? this.themeMode,
+      useHighContrast: useHighContrast ?? this.useHighContrast,
+      accentColor: accentColor ?? this.accentColor,
+      enablePushNotifications: enablePushNotifications ?? this.enablePushNotifications,
+      enableEmailNotifications: enableEmailNotifications ?? this.enableEmailNotifications,
+      enableSoundEffects: enableSoundEffects ?? this.enableSoundEffects,
+      enableVibration: enableVibration ?? this.enableVibration,
+      shareUsageData: shareUsageData ?? this.shareUsageData,
+      allowLocationTracking: allowLocationTracking ?? this.allowLocationTracking,
+      defaultLanguage: defaultLanguage ?? this.defaultLanguage,
+      enableAutoSave: enableAutoSave ?? this.enableAutoSave,
+      dataRefreshInterval: dataRefreshInterval ?? this.dataRefreshInterval,
+      featureToggles: featureToggles ?? this.featureToggles,
+    );
+  }
+  
+  /// Map representation of preferences for serialization
+  Map<String, dynamic> toMap() {
+    return {
+      'themeMode': themeMode,
+      'useHighContrast': useHighContrast,
+      'accentColor': accentColor,
+      'enablePushNotifications': enablePushNotifications,
+      'enableEmailNotifications': enableEmailNotifications,
+      'enableSoundEffects': enableSoundEffects,
+      'enableVibration': enableVibration,
+      'shareUsageData': shareUsageData,
+      'allowLocationTracking': allowLocationTracking,
+      'defaultLanguage': defaultLanguage,
+      'enableAutoSave': enableAutoSave,
+      'dataRefreshInterval': dataRefreshInterval,
+      'featureToggles': featureToggles,
+    };
+  }
+  
+  /// Factory constructor to create UserPreferences from a map
+  factory UserPreferences.fromMap(Map<String, dynamic> map) {
+    return UserPreferences(
+      themeMode: map['themeMode'] ?? 'system',
+      useHighContrast: map['useHighContrast'] ?? false,
+      accentColor: map['accentColor'] ?? 'green',
+      enablePushNotifications: map['enablePushNotifications'] ?? true,
+      enableEmailNotifications: map['enableEmailNotifications'] ?? true,
+      enableSoundEffects: map['enableSoundEffects'] ?? true,
+      enableVibration: map['enableVibration'] ?? true,
+      shareUsageData: map['shareUsageData'] ?? false,
+      allowLocationTracking: map['allowLocationTracking'] ?? false,
+      defaultLanguage: map['defaultLanguage'] ?? 'en',
+      enableAutoSave: map['enableAutoSave'] ?? true,
+      dataRefreshInterval: map['dataRefreshInterval'] ?? 15,
+      featureToggles: map['featureToggles'] != null
+          ? Map<String, bool>.from(map['featureToggles'])
+          : {},
+    );
+  }
+  
+  @override
+  List<Object?> get props => [
+    themeMode, useHighContrast, accentColor,
+    enablePushNotifications, enableEmailNotifications,
+    enableSoundEffects, enableVibration,
+    shareUsageData, allowLocationTracking,
+    defaultLanguage, enableAutoSave, dataRefreshInterval,
+    featureToggles,
+  ];
+}
+
+// Path: lib/modules/user_profile/data/local/secure_storage_service.dart
+
+// Author: Dycoh Gacheri (https://github.com/Dycoh)
+// Description: Service for securely storing sensitive user data on the device.
+// Provides encryption and protection against unauthorized access.
+
+// Last Modified: Tuesday, 25 February 2025 16:35
+
+// Core/Framework imports
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
+/// Service handling secure storage operations
+class SecureStorageService {
+  // Asset paths
+  static const String _androidEncryption = 'true';
+  
+  // Configuration parameters
+  static const KeychainAccessibility _iosAccessibility = KeychainAccessibility.first_unlock;
+  
+  final FlutterSecureStorage _secureStorage;
+  
+  /// Creates a secure storage service with optional configuration
+  SecureStorageService({FlutterSecureStorage? secureStorage})
+      : _secureStorage = secureStorage ?? 
+            const FlutterSecureStorage(
+              aOptions: AndroidOptions(
+                encryptedSharedPreferences: true,
+              ),
+              iOptions: IOSOptions(
+                accessibility: _iosAccessibility,
+              ),
+            );
+  
+  /// Read a value from secure storage
+  Future<String?> read(String key) async {
+    try {
+      return await _secureStorage.read(key: key);
+    } catch (e) {
+      // Log error for debugging while maintaining privacy
+      print('Error reading from secure storage: $e');
+      return null;
+    }
+  }
+  
+  /// Write a value to secure storage
+  Future<void> write(String key, String value) async {
+    try {
+      await _secureStorage.write(key: key, value: value);
+    } catch (e) {
+      print('Error writing to secure storage: $e');
+      throw Exception('Failed to write to secure storage: $e');
+    }
+  }
+  
+  /// Delete a value from secure storage
+  Future<void> delete(String key) async {
+    try {
+      await _secureStorage.delete(key: key);
+    } catch (e) {
+      print('Error deleting from secure storage: $e');
+      throw Exception('Failed to delete from secure storage: $e');
+    }
+  }
+  
+  /// Delete all values from secure storage
+  ///
+  /// This is a destructive operation and should be used with caution,
+  /// typically only during account deletion or app reset
+  Future<void> deleteAll() async {
+    try {
+      await _secureStorage.deleteAll();
+    } catch (e) {
+      print('Error deleting all data from secure storage: $e');
+      throw Exception('Failed to delete all data from secure storage: $e');
+    }
+  }
+}
+
+// Path: lib/modules/user_profile/data/local/user_local_data_source.dart
+
+// Author: Dycoh Gacheri (https://github.com/Dycoh)
+// Description: Local data source for user profile data using secure storage.
+// Responsible for persistence of user information on the device.
+
+// Last Modified: Tuesday, 25 February 2025 16:35
+
+// Core/Framework imports
+import 'dart:convert';
+
+// Project imports - Models
+import '../../models/user_profile.dart';
+import 'secure_storage_service.dart';
+
+/// Keys for secure storage
+class StorageKeys {
+  // User data keys
+  static const String userProfile = 'user_profile';
+  static const String userPreferences = 'user_preferences';
+  
+  // Session keys
+  static const String authToken = 'auth_token';
+  static const String refreshToken = 'refresh_token';
+}
+
+/// Local data source for user profile operations
+class UserLocalDataSource {
+  // Service instances
+  final SecureStorageService _secureStorage;
+  
+  UserLocalDataSource({required SecureStorageService secureStorage})
+      : _secureStorage = secureStorage;
+  
+  /// Retrieve user profile from secure storage
+  Future<UserProfile?> getProfile() async {
+    try {
+      final profileJson = await _secureStorage.read(StorageKeys.userProfile);
+      if (profileJson == null) {
+        // No profile found in storage
+        return null;
+      }
+      
+      // Parse JSON string to Map and then to UserProfile
+      final profileMap = jsonDecode(profileJson) as Map<String, dynamic>;
+      return UserProfile.fromMap(profileMap);
+    } catch (e) {
+      // Log error for debugging
+      print('Error reading profile from storage: $e');
+      return null;
+    }
+  }
+  
+  /// Save user profile to secure storage
+  Future<void> saveProfile(UserProfile profile) async {
+    try {
+      // Convert profile to Map, then to JSON string
+      final profileMap = profile.toMap();
+      final profileJson = jsonEncode(profileMap);
+      
+      // Store in secure storage
+      await _secureStorage.write(StorageKeys.userProfile, profileJson);
+    } catch (e) {
+      print('Error saving profile to storage: $e');
+      throw Exception('Failed to save profile: $e');
+    }
+  }
+  
+  /// Delete user profile from secure storage
+  Future<void> deleteProfile() async {
+    try {
+      await _secureStorage.delete(StorageKeys.userProfile);
+    } catch (e) {
+      print('Error deleting profile from storage: $e');
+      throw Exception('Failed to delete profile: $e');
+    }
+  }
+  
+  /// Check if a user profile exists in storage
+  Future<bool> hasProfile() async {
+    final profile = await getProfile();
+    return profile != null;
+  }
+}
+
+// Path: lib/modules/user_profile/data/remote/user_remote_data_source.dart
+
+// Author: Dycoh Gacheri (https://github.com/Dycoh)
+// Description: Remote data source for user profile data. Manages API communication
+// for fetching and updating user information on the backend.
+
+// Last Modified: Tuesday, 25 February 2025 16:35
+
+// Core/Framework imports
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+
+// Project imports - Models
+import '../../models/user_profile.dart';
+
+/// Remote data source for user profile operations
+class UserRemoteDataSource {
+  // API endpoints
+  static const String _baseUrl = 'https://api.sereni.app';
+  static const String _profileEndpoint = '/users/profile';
+  
+  // HTTP client
+  final http.Client _client;
+  
+  // Authentication token getter
+  final Future<String?> Function() _getAuthToken;
+  
+  /// Creates a remote data source with the required dependencies
+  UserRemoteDataSource({
+    required http.Client client,
+    required Future<String?> Function() getAuthToken,
+  }) : 
+    _client = client,
+    _getAuthToken = getAuthToken;
+
+  /// Get user profile from the server
+  Future<UserProfile?> getProfile(String userId) async {
+    try {
+      // Get auth token
+      final token = await _getAuthToken();
+      if (token == null) {
+        throw Exception('Authentication token not available');
+      }
+      
+      // Prepare request
+      final uri = Uri.parse('$_baseUrl$_profileEndpoint/$userId');
+      final response = await _client.get(
+        uri,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+      
+      // Handle response
+      if (response.statusCode == 200) {
+        final profileMap = jsonDecode(response.body) as Map<String, dynamic>;
+        return UserProfile.fromMap(profileMap);
+      } else {
+        throw Exception('Failed to fetch profile: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error getting profile from server: $e');
+      return null;
+    }
+  }
+  
+  /// Update user profile on the server
+  Future<bool> updateProfile(UserProfile profile) async {
+    try {
+      // Get auth token
+      final token = await _getAuthToken();
+      if (token == null) {
+        throw Exception('Authentication token not available');
+      }
+      
+      // Ensure profile ID exists
+      if (profile.id == null) {
+        throw Exception('Profile ID is required for updating');
+      }
+      
+      // Prepare request
+      final uri = Uri.parse('$_baseUrl$_profileEndpoint/${profile.id}');
+      final response = await _client.put(
+        uri,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(profile.toMap()),
+      );
+      
+      // Handle response
+      return response.statusCode == 200;
+    } catch (e) {
+      print('Error updating profile on server: $e');
+      return false;
+    }
+  }
+  
+  /// Create a new user profile on the server
+  Future<UserProfile?> createProfile(UserProfile profile) async {
+    try {
+      // Get auth token
+      final token = await _getAuthToken();
+      if (token == null) {
+        throw Exception('Authentication token not available');
+      }
+      
+      // Prepare request
+      final uri = Uri.parse('$_baseUrl$_profileEndpoint');
+      final response = await _client.post(
+        uri,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(profile.toMap()),
+      );
+      
+      // Handle response
+      if (response.statusCode == 201) {
+        final profileMap = jsonDecode(response.body) as Map<String, dynamic>;
+        return UserProfile.fromMap(profileMap);
+      } else {
+        throw Exception('Failed to create profile: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error creating profile on server: $e');
+      return null;
+    }
+  }
+  
+  /// Delete user profile from the server
+  Future<bool> deleteProfile(String userId) async {
+    try {
+      // Get auth token
+      final token = await _getAuthToken();
+      if (token == null) {
+        throw Exception('Authentication token not available');
+      }
+      
+      // Prepare request
+      final uri = Uri.parse('$_baseUrl$_profileEndpoint/$userId');
+      final response = await _client.delete(
+        uri,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+      
+      // Handle response
+      return response.statusCode == 204;
+    } catch (e) {
+      print('Error deleting profile from server: $e');
+      return false;
+    }
+  }
+}
+
+// Path: lib/modules/user_profile/repository/user_repository.dart
+
+// Author: Dycoh Gacheri (https://github.com/Dycoh)
+// Description: Repository for managing user profile data. Coordinates between local
+// and remote data sources while providing a clean API for the application.
+
+// Last Modified: Tuesday, 25 February 2025 16:35
+
+// Core/Framework imports
+import 'dart:async';
+
+// Project imports - Models
+import '../models/user_profile.dart';
+import '../data/local/user_local_data_source.dart';
+import '../data/remote/user_remote_data_source.dart';
+
+/// Repository handling all user profile operations
+class UserRepository {
+  // Data sources
+  final UserLocalDataSource _localDataSource;
+  final UserRemoteDataSource? _remoteDataSource;
+  
+  // Stream controller for broadcasting profile changes
+  final _profileController = StreamController<UserProfile>.broadcast();
+  
+  // Cached profile data
+  UserProfile? _cachedProfile;
+  
+  /// Creates a repository with the required data sources
+  ///
+  /// The [remoteDataSource] is optional, allowing the repository to work in offline mode
+  UserRepository({
+    required UserLocalDataSource localDataSource,
+    UserRemoteDataSource? remoteDataSource,
+  }) : 
+    _localDataSource = localDataSource, 
+    _remoteDataSource = remoteDataSource;
+
+  /// Stream of user profile updates
+  Stream<UserProfile> get profileStream => _profileController.stream;
+  
+  /// Get the current user profile
+  Future<UserProfile?> getCurrentProfile() async {
+    // Return cached profile if available
+    if (_cachedProfile != null) {
+      return _cachedProfile;
+    }
+    
+    try {
+      // Try to get from local storage first
+      final localProfile = await _localDataSource.getProfile();
+      
+      // If we have a remote data source and are online, sync with server
+      if (_remoteDataSource != null && localProfile != null) {
+        try {
+          final remoteProfile = await _remoteDataSource!.getProfile(localProfile.id!);
+          if (remoteProfile != null) {
+            // Update local storage with latest from server
+            await _localDataSource.saveProfile(remoteProfile);
+            
+            // Update cache
+            _cachedProfile = remoteProfile;
+            
+            return remoteProfile;
+          }
+        } catch (e) {
+          // If remote fetch fails, still return local data
+          print('Failed to sync profile with server: $e');
+        }
+      }
+      
+      // Update cache with local profile
+      _cachedProfile = localProfile;
+      
+      return localProfile;
+    } catch (e) {
+      print('Error getting current profile: $e');
+      return null;
+    }
+  }
+  
+  /// Save or update user profile
+  Future<bool> saveProfile(UserProfile profile) async {
+    try {
+      // Save locally
+      await _localDataSource.saveProfile(profile);
+      
+      // Update cache
+      _cachedProfile = profile;
+      
+      // Sync with server if available
+      if (_remoteDataSource != null) {
+        try {
+          if (profile.id != null) {
+            // Update existing profile
+            await _remoteDataSource!.updateProfile(profile);
+          } else {
+            // Create new profile
+            final remoteProfile = await _remoteDataSource!.createProfile(profile);
+            if (remoteProfile != null) {
+              // Update with server-generated ID and timestamps
+              await _localDataSource.saveProfile(remoteProfile);
+              _cachedProfile = remoteProfile;
+              _profileController.add(remoteProfile);
+              return true;
+            }
+          }
+        } catch (e) {
+          print('Failed to sync profile with server: $e');
+          // Continue even if server sync fails
+        }
+      }
+      
+      // Broadcast the change
+      _profileController.add(profile);
+      
+      return true;
+    } catch (e) {
+      print('Error saving profile: $e');
+      return false;
+    }
+  }
+  
+  /// Update specific fields in the user profile
+  Future<bool> updateProfileFields({
+    String? name,
+    String? email,
+    String? phoneNumber,
+    String? gender,
+    double? age,
+    DateTime? dateOfBirth,
+    String? bio,
+    String? avatarUrl,
+    bool? isOnboardingComplete,
+  }) async {
+    try {
+      final currentProfile = await getCurrentProfile();
+      if (currentProfile == null) {
+        return false;
+      }
+      
+      final updatedProfile = currentProfile.copyWith(
+        name: name,
+        email: email,
+        phoneNumber: phoneNumber,
+        gender: gender,
+        age: age,
+        dateOfBirth: dateOfBirth,
+        bio: bio,
+        avatarUrl: avatarUrl,
+        isOnboardingComplete: isOnboardingComplete,
+        lastActive: DateTime.now(),
+      );
+      
+      return saveProfile(updatedProfile);
+    } catch (e) {
+      print('Error updating profile fields: $e');
+      return false;
+    }
+  }
+  
+  /// Create a new user profile from onboarding data
+  Future<bool> createProfileFromOnboarding(UserProfile profile) async {
+    return saveProfile(profile.copyWith(
+      isOnboardingComplete: true,
+      createdAt: DateTime.now(),
+      lastActive: DateTime.now(),
+    ));
+  }
+  
+  /// Delete the user profile
+  Future<bool> deleteProfile() async {
+    try {
+      // Get current profile for the ID
+      final currentProfile = await getCurrentProfile();
+      
+      // Delete locally
+      await _localDataSource.deleteProfile();
+      
+      // Clear cache
+      _cachedProfile = null;
+      
+      // Delete from server if available
+      if (_remoteDataSource != null && currentProfile?.id != null) {
+        try {
+          await _remoteDataSource!.deleteProfile(currentProfile!.id!);
+        } catch (e) {
+          print('Failed to delete profile from server: $e');
+          // Continue even if server deletion fails
+        }
+      }
+      
+      return true;
+    } catch (e) {
+      print('Error deleting profile: $e');
+      return false;
+    }
+  }
+  
+  /// Check if a profile exists
+  Future<bool> hasProfile() async {
+    if (_cachedProfile != null) {
+      return true;
+    }
+    return _localDataSource.hasProfile();
+  }
+  
+  /// Clear cached profile data
+  void clearCache() {
+    _cachedProfile = null;
+  }
+  
+  /// Dispose of resources
+  void dispose() {
+    _profileController.close();
+  }
+}
+
+// Path: lib/modules/user_profile/bloc/user_profile_bloc.dart
+
+// Author: Dycoh Gacheri (https://github.com/Dycoh)
+// Description: BLoC for managing user profile state throughout the application.
+// Handles persistence and provides a unified interface for profile operations.
+
+// Last Modified: Tuesday, 25 February 2025 16:35
+
+// Core/Framework imports
+import 'dart:async';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:equatable/equatable.dart';
+
+// Project imports - Models
+import '../models/user_profile.dart';
+import '../repository/user_repository.dart';
+
+// Events
+abstract class UserProfileEvent extends Equatable {
+  const UserProfileEvent();
+  
+  @override
+  List<Object?> get props => [];
+}
+
+/// Event to load the user profile
+class UserProfileLoaded extends UserProfileEvent {}
+
+/// Event to update the entire user profile
+class UserProfileUpdated extends UserProfileEvent {
+  final UserProfile profile;
+  
+  const UserProfileUpdated(this.profile);
+  
+  @override
+  List<Object> get props => [profile];
+}
+
+/// Event to update specific fields in the user profile
+class UserProfileFieldsUpdated extends UserProfileEvent {
+  // Personal information
+  final String? name;
+  final String? email;
+  final String? phoneNumber;
+  
+  // Demographics
+  final String? gender;
+  final double? age;
+  final DateTime? dateOfBirth;
+  
+  // Profile data
+  final String? bio;
+  final String? avatarUrl;
+  
+  // Status
+  final bool? isOnboardingComplete;
+  
+  const UserProfileFieldsUpdated({
+    this.name,
+    this.email,
+    this.phoneNumber,
+    this.gender,
+    this.age,
+    this.dateOfBirth,
+    this.bio,
+    this.avatarUrl,
+    this.isOnboardingComplete,
+  });
+  
+  @override
+  List<Object?> get props => [
+    name, email, phoneNumber, gender, age, 
+    dateOfBirth, bio, avatarUrl, isOnboardingComplete
+  ];
+}
+
+/// Event for saving onboarding data to create a user profile
+class OnboardingDataSaved extends UserProfileEvent {
+  final UserProfile profile;
+  
+  const OnboardingDataSaved(this.profile);
+  
+  @override
+  List<Object> get props => [profile];
+}
+
+/// Event to delete the user profile
+class UserProfileDeleted extends UserProfileEvent {}
+
+// States
+abstract class UserProfileState extends Equatable {
+  const UserProfileState();
+  
+  @override
+  List<Object?> get props => [];
+}
+
+/// Initial state before any profile operations
+class UserProfileInitial extends UserProfileState {}
+
+/// State when profile data is being loaded or processed
+class UserProfileLoading extends UserProfileState {}
+
+/// State when profile data has been successfully loaded
+class UserProfileLoadSuccess extends UserProfileState {
+  final UserProfile profile;
+  
+  const UserProfileLoadSuccess(this.profile);
+  
+  @override
+  List<Object> get props => [profile];
+}
+
+/// State when profile data failed to load
+class UserProfileLoadFailure extends UserProfileState {
+  final String error;
+  // Continuing from lib/modules/user_profile/bloc/user_profile_bloc.dart
+
+/// State when profile data failed to load
+class UserProfileLoadFailure extends UserProfileState {
+  final String error;
+  
+  const UserProfileLoadFailure(this.error);
+  
+  @override
+  List<Object> get props => [error];
+}
+
+/// BLoC for managing user profile state
+class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
+  final UserRepository _userRepository;
+  StreamSubscription? _profileSubscription;
+  
+  UserProfileBloc({required UserRepository userRepository})
+      : _userRepository = userRepository,
+        super(UserProfileInitial()) {
+    // Register event handlers
+    on<UserProfileLoaded>(_onUserProfileLoaded);
+    on<UserProfileUpdated>(_onUserProfileUpdated);
+    on<UserProfileFieldsUpdated>(_onUserProfileFieldsUpdated);
+    on<OnboardingDataSaved>(_onOnboardingDataSaved);
+    on<UserProfileDeleted>(_onUserProfileDeleted);
+    
+    // Subscribe to profile changes from repository
+    _profileSubscription = _userRepository.profileStream.listen(
+      (profile) => add(UserProfileUpdated(profile)),
+    );
+  }
+  
+  Future<void> _onUserProfileLoaded(
+    UserProfileLoaded event,
+    Emitter<UserProfileState> emit,
+  ) async {
+    try {
+      emit(UserProfileLoading());
+      
+      final profile = await _userRepository.getCurrentProfile();
+      
+      if (profile != null) {
+        emit(UserProfileLoadSuccess(profile));
+      } else {
+        emit(UserProfileInitial());
+      }
+    } catch (e) {
+      emit(UserProfileLoadFailure('Failed to load profile: $e'));
+    }
+  }
+  
+  Future<void> _onUserProfileUpdated(
+    UserProfileUpdated event,
+    Emitter<UserProfileState> emit,
+  ) async {
+    try {
+      emit(UserProfileLoading());
+      
+      final success = await _userRepository.saveProfile(event.profile);
+      
+      if (success) {
+        emit(UserProfileLoadSuccess(event.profile));
+      } else {
+        emit(UserProfileLoadFailure('Failed to update profile'));
+      }
+    } catch (e) {
+      emit(UserProfileLoadFailure('Error updating profile: $e'));
+    }
+  }
+  
+  Future<void> _onUserProfileFieldsUpdated(
+    UserProfileFieldsUpdated event,
+    Emitter<UserProfileState> emit,
+  ) async {
+    try {
+      emit(UserProfileLoading());
+      
+      final success = await _userRepository.updateProfileFields(
+        name: event.name,
+        email: event.email,
+        phoneNumber: event.phoneNumber,
+        gender: event.gender,
+        age: event.age,
+        dateOfBirth: event.dateOfBirth,
+        bio: event.bio,
+        avatarUrl: event.avatarUrl,
+        isOnboardingComplete: event.isOnboardingComplete,
+      );
+      
+      if (success) {
+        final updatedProfile = await _userRepository.getCurrentProfile();
+        if (updatedProfile != null) {
+          emit(UserProfileLoadSuccess(updatedProfile));
+        } else {
+          emit(UserProfileLoadFailure('Failed to retrieve updated profile'));
+        }
+      } else {
+        emit(UserProfileLoadFailure('Failed to update profile fields'));
+      }
+    } catch (e) {
+      emit(UserProfileLoadFailure('Error updating profile fields: $e'));
+    }
+  }
+  
+  Future<void> _onOnboardingDataSaved(
+    OnboardingDataSaved event,
+    Emitter<UserProfileState> emit,
+  ) async {
+    try {
+      emit(UserProfileLoading());
+      
+      final success = await _userRepository.createProfileFromOnboarding(event.profile);
+      
+      if (success) {
+        final createdProfile = await _userRepository.getCurrentProfile();
+        if (createdProfile != null) {
+          emit(UserProfileLoadSuccess(createdProfile));
+        } else {
+          emit(UserProfileLoadFailure('Failed to retrieve created profile'));
+        }
+      } else {
+        emit(UserProfileLoadFailure('Failed to save onboarding data'));
+      }
+    } catch (e) {
+      emit(UserProfileLoadFailure('Error saving onboarding data: $e'));
+    }
+  }
+  
+  Future<void> _onUserProfileDeleted(
+    UserProfileDeleted event,
+    Emitter<UserProfileState> emit,
+  ) async {
+    try {
+      emit(UserProfileLoading());
+      
+      final success = await _userRepository.deleteProfile();
+      
+      if (success) {
+        emit(UserProfileInitial());
+      } else {
+        emit(UserProfileLoadFailure('Failed to delete profile'));
+      }
+    } catch (e) {
+      emit(UserProfileLoadFailure('Error deleting profile: $e'));
+    }
+  }
+  
+  @override
+  Future<void> close() {
+    _profileSubscription?.cancel();
+    _userRepository.dispose();
+    return super.close();
+  }
+}
+
+// Path: lib/modules/user_profile/util/profile_validators.dart
+
+// Author: Dycoh Gacheri (https://github.com/Dycoh)
+// Description: Validation utilities for user profile fields. Ensures data
+// integrity and proper formatting before storage or transmission.
+
+// Last Modified: Tuesday, 25 February 2025 16:35
+
+/// Utility class for validating user profile fields
+class ProfileValidators {
+  // Email validation regex
+  static final RegExp _emailRegex = RegExp(
+    r'^[a-zA-Z0-9.]+@[a-zA-Z0-9]+\.[a-zA-Z]+',
+  );
+  
+  // Phone number validation regex (international format)
+  static final RegExp _phoneRegex = RegExp(
+    r'^\+?[0-9]{10,15}$',
+  );
+  
+  /// Validates an email address format
+  static String? validateEmail(String? email) {
+    if (email == null || email.isEmpty) {
+      return null; // Email is optional
+    }
+    
+    if (!_emailRegex.hasMatch(email)) {
+      return 'Please enter a valid email address';
+    }
+    
+    return null; // Valid email
+  }
+  
+  /// Validates a phone number format
+  static String? validatePhoneNumber(String? phoneNumber) {
+    if (phoneNumber == null || phoneNumber.isEmpty) {
+      return null; // Phone number is optional
+    }
+    
+    if (!_phoneRegex.hasMatch(phoneNumber)) {
+      return 'Please enter a valid phone number';
+    }
+    
+    return null; // Valid phone number
+  }
+  
+  /// Validates a name
+  static String? validateName(String? name) {
+    if (name == null || name.isEmpty) {
+      return 'Name is required';
+    }
+    
+    if (name.length < 2) {
+      return 'Name must be at least 2 characters';
+    }
+    
+    return null; // Valid name
+  }
+  
+  /// Validates age
+  static String? validateAge(double? age) {
+    if (age == null) {
+      return 'Age is required';
+    }
+    
+    if (age < 0 || age > 120) {
+      return 'Please enter a valid age between 0 and 120';
+    }
+    
+    return null; // Valid age
+  }
+  
+  /// Validates a biography
+  static String? validateBio(String? bio) {
+    if (bio == null || bio.isEmpty) {
+      return null; // Bio is optional
+    }
+    
+    if (bio.length > 500) {
+      return 'Bio should be less than 500 characters';
+    }
+    
+    return null; // Valid bio
+  }
+  
+  /// Validates a URL
+  static String? validateUrl(String? url) {
+    if (url == null || url.isEmpty) {
+      return null; // URL is optional
+    }
+    
+    try {
+      final uri = Uri.parse(url);
+      if (!uri.isAbsolute) {
+        return 'Please enter a valid URL';
+      }
+      return null; // Valid URL
+    } catch (e) {
+      return 'Please enter a valid URL';
+    }
+  }
+}
+
+// Path: lib/modules/user_profile/ui/profile_page.dart
+
+// Author: Dycoh Gacheri (https://github.com/Dycoh)
+// Description: Main profile page UI. Displays user information and provides
+// interfaces for editing and managing the profile.
+
+// Last Modified: Tuesday, 25 February 2025 16:35
+
+// Core/Framework imports
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+// Project imports - BLoC
+import '../bloc/user_profile_bloc.dart';
+import '../util/profile_validators.dart';
+import '../models/user_profile.dart';
+
+/// User profile page
+class ProfilePage extends StatelessWidget {
+  const ProfilePage({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocConsumer<UserProfileBloc, UserProfileState>(
+      listener: (context, state) {
+        if (state is UserProfileLoadFailure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.error)),
+          );
+        }
+      },
+      builder: (context, state) {
+        if (state is UserProfileInitial) {
+          // Trigger profile loading if not already loaded
+          context.read<UserProfileBloc>().add(UserProfileLoaded());
+          return const _LoadingView();
+        } else if (state is UserProfileLoading) {
+          return const _LoadingView();
+        } else if (state is UserProfileLoadSuccess) {
+          return _ProfileView(profile: state.profile);
+        } else {
+          // Handle error state or any other states
+          return const _ErrorView();
+        }
+      },
+    );
+  }
+}
+
+/// Loading view displayed while profile is being loaded
+class _LoadingView extends StatelessWidget {
+  const _LoadingView({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Profile')),
+      body: const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+  }
+}
+
+/// Error view displayed when profile loading fails
+class _ErrorView extends StatelessWidget {
+  const _ErrorView({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Profile')),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              'Failed to load profile',
+              style: TextStyle(fontSize: 18),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                context.read<UserProfileBloc>().add(UserProfileLoaded());
+              },
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Main profile view displaying user information
+class _ProfileView extends StatelessWidget {
+  final UserProfile profile;
+  
+  const _ProfileView({
+    Key? key,
+    required this.profile,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Profile'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => EditProfilePage(profile: profile),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Profile header with avatar
+            Center(
+              child: Column(
+                children: [
+                  _ProfileAvatar(avatarUrl: profile.avatarUrl),
+                  const SizedBox(height: 16),
+                  Text(
+                    profile.name ?? 'Anonymous User',
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                  if (profile.bio != null && profile.bio!.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      profile.bio!,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            
+            const SizedBox(height: 32),
+            
+            // Personal information section
+            _SectionHeader(title: 'Personal Information'),
+            _InfoTile(
+              label: 'Email',
+              value: profile.email ?? 'Not provided',
+              icon: Icons.email,
+            ),
+            _InfoTile(
+              label: 'Phone',
+              value: profile.phoneNumber ?? 'Not provided',
+              icon: Icons.phone,
+            ),
+            _InfoTile(
+              label: 'Gender',
+              value: profile.gender ?? 'Not specified',
+              icon: Icons.person,
+            ),
+            _InfoTile(
+              label: 'Age',
+              value: profile.age.toString(),
+              icon: Icons.calendar_today,
+            ),
+            if (profile.dateOfBirth != null)
+              _InfoTile(
+                label: 'Birth Date',
+                value: _formatDate(profile.dateOfBirth!),
+                icon: Icons.cake,
+              ),
+              
+            const SizedBox(height: 32),
+            
+            // Account information section
+            _SectionHeader(title: 'Account Information'),
+            _InfoTile(
+              label: 'Account Created',
+              value: _formatDate(profile.createdAt),
+              icon: Icons.access_time,
+            ),
+            _InfoTile(
+              label: 'Last Active',
+              value: profile.lastActive != null
+                  ? _formatDate(profile.lastActive!)
+                  : 'Not available',
+              icon: Icons.update,
+            ),
+            _InfoTile(
+              label: 'Onboarding Status',
+              value: profile.isOnboardingComplete ? 'Complete' : 'Incomplete',
+              icon: Icons.check_circle,
+            ),
+            
+            const SizedBox(height: 32),
+            
+            // Account actions section
+            _SectionHeader(title: 'Account Actions'),
+            ListTile(
+              leading: const Icon(Icons.delete, color: Colors.red),
+              title: const Text('Delete Account'),
+              onTap: () => _showDeleteConfirmation(context),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  /// Format a date for display
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year}';
+  }
+  
+  /// Show confirmation dialog before deleting account
+  Future<void> _showDeleteConfirmation(BuildContext context) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Account'),
+        content: const Text(
+          'Are you sure you want to delete your account? This action cannot be undone.'
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+    
+    if (confirm == true) {
+      if (!context.mounted) return;
+      
+      // Delete the profile
+      context.read<UserProfileBloc>().add(UserProfileDeleted());
+      
+      // Navigate back to welcome or login screen
+      Navigator.of(context).pushNamedAndRemoveUntil('/welcome', (route) => false);
+    }
+  }
+}
+
+/// Section header widget
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  
+  const _SectionHeader({
+    Key? key,
+    required this.title,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Text(
+        title,
+        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+}
+
+/// Information tile widget
+class _InfoTile extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+  
+  const _InfoTile({
+    Key? key,
+    required this.label,
+    required this.value,
+    required this.icon,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: Theme.of(context).primaryColor),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Colors.grey,
+                  ),
+                ),
+                Text(
+                  value,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Profile avatar widget
+class _ProfileAvatar extends StatelessWidget {
+  final String? avatarUrl;
+  final double size;
+  
+  const _ProfileAvatar({
+    Key? key,
+    this.avatarUrl,
+    this.size = 100,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Theme.of(context).primaryColor.withOpacity(0.2),
+        image: avatarUrl != null
+            ? DecorationImage(
+                image: NetworkImage(avatarUrl!),
+                fit: BoxFit.cover,
+              )
+            : null,
+      ),
+      child: avatarUrl == null
+          ? Icon(
+              Icons.person,
+              size: size * 0.6,
+              color: Theme.of(context).primaryColor,
+            )
+          : null,
+    );
+  }
+}
+
+// Path: lib/modules/user_profile/ui/edit_profile_page.dart
+
+// Author: Dycoh Gacheri (https://github.com/Dycoh)
+// Description: Page for editing user profile information. Provides form validation
+// and submission handling.
+
+// Last Modified: Tuesday, 25 February 2025 16:35
+
+// Core/Framework imports
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+// Project imports - BLoC & Models
+import '../bloc/user_profile_bloc.dart';
+import '../models/user_profile.dart';
+import '../util/profile_validators.dart';
+
+/// Page for editing user profile information
+class EditProfilePage extends StatefulWidget {
+  final UserProfile profile;
+  
+  const EditProfilePage({
+    Key? key,
+    required this.profile,
+  }) : super(key: key);
+
+  @override
+  State<EditProfilePage> createState() => _EditProfilePageState();
+}
+
+class _EditProfilePageState extends State<EditProfilePage> {
+  // Form key for validation
+  final _formKey = GlobalKey<FormState>();
+  
+  // Form controllers
+  late TextEditingController _nameController;
+  late TextEditingController _emailController;
+  late TextEditingController _phoneController;
+  late TextEditingController _bioController;
+  
+  // Form values
+  String? _selectedGender;
+  double _age = 25.0;
+  DateTime? _dateOfBirth;
+  
+  @override
+  void initState() {
+    super.initState();
+    
+    // Initialize controllers with current profile values
+    _nameController = TextEditingController(text: widget.profile.name);
+    _emailController = TextEditingController(text: widget.profile.email);
+    _phoneController = TextEditingController(text: widget.profile.phoneNumber);
+    _bioController = TextEditingController(text: widget.profile.bio);
+    
+    // Initialize form values
+    _selectedGender = widget.profile.gender;
+    _age = widget.profile.age;
+    _dateOfBirth = widget.profile.dateOfBirth;
+  }
+  
+  @override
+  void dispose() {
+    // Dispose controllers
+    _nameController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
+    _bioController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Edit Profile'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.check),
+            onPressed: _submitForm,
+          ),
+        ],
+      ),
+      body: BlocListener<UserProfileBloc, UserProfileState>(
+        listener: (context, state) {
+          if (state is UserProfileLoadSuccess) {
+            // Profile updated successfully, navigate back
+            Navigator.of(context).pop();
+          } else if (state is UserProfileLoadFailure) {
+            // Show error message
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.error)),
+            );
+          }
+        },
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Profile avatar editor
+                Center(
+                  child: Stack(
+                    children: [
+                      _ProfileAvatar(
+                        avatarUrl: widget.profile.avatarUrl,
+                        size: 120,
+                      ),
+                      Positioned(
+                        right: 0,
+                        bottom: 0,
+                        child: CircleAvatar(
+                          backgroundColor: Theme.of(context).primaryColor,
+                          radius: 18,
+                          child: IconButton(
+                            icon: const Icon(
+                              Icons.camera_alt,
+                              size: 18,
+                              color: Colors.white,
+                            ),
+                            onPressed: () {
+                              // TODO: Implement image selection
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Image upload not implemented yet'),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                
+                const SizedBox(height: 32),
+                
+                // Personal information fields
+                const _SectionHeader(title: 'Personal Information'),
+                
+                // Name field
+                TextFormField(
+                  controller: _nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Name',
+                    hintText: 'Enter your full name',
+                    prefixIcon: Icon(Icons.person),
+                  ),
+                  validator: ProfileValidators.validateName,
+                ),
+                
+                const SizedBox(height: 16),
+                
+                // Email field
+                TextFormField(
+                  controller: _emailController,
+                  decoration: const InputDecoration(
+                    labelText: 'Email',
+                    hintText: 'Enter your email address',
+                    prefixIcon: Icon(Icons.email),
+                  ),
+                  keyboardType: TextInputType.emailAddress,
+                  validator: ProfileValidators.validateEmail,
+                ),
+                
+                const SizedBox(height: 16),
+                
+                // Phone field
+                TextFormField(
+                  controller: _phoneController,
+                  decoration: const InputDecoration(
+                    labelText: 'Phone Number',
+                    hintText: 'Enter your phone number',
+                    prefixIcon: Icon(Icons.phone),
+                  ),
+                  keyboardType: TextInputType.phone,
+                  validator: ProfileValidators.validatePhoneNumber,
+                ),
+                
+                const SizedBox(height: 16),
+                
+                // Gender selection
+                DropdownButtonFormField<String>(
+                  value: _selectedGender,
+                  decoration: const InputDecoration(
+                    labelText: 'Gender',
+                    prefixIcon: Icon(Icons.people),
+                  ),
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'Male',
+                      child: Text('Male'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Female',
+                      child: Text('Female'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Non-binary',
+                      child: Text('Non-binary'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Prefer not to say',
+                      child: Text('Prefer not to say'),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedGender = value;
+                    });
+                  },
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please select a gender';
+                    }
+                    return null;
+                  },
+                ),
+                
+                const SizedBox(height: 16),
+                
+                // Age slider
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Age: ${_age.toInt()}',
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                    Slider(
+                      value: _age,
+                      min: 0,
+                      max: 120,
+                      divisions: 120,
+                      label: _age.toInt().toString(),
+                      onChanged: (value) {
+                        setState(() {
+                          _age = value;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+                
+                const SizedBox(height: 16),
+                
+                // Date of birth picker
+                ListTile(
+                  leading: const Icon(Icons.cake),
+                  title: const Text('Date of Birth'),
+                  subtitle: Text(
+                    _dateOfBirth != null
+                        ? '${_dateOfBirth!.day}/${_dateOfBirth!.month}/${_dateOfBirth!.year}'
+                        : 'Not set',
+                  ),
+                  onTap: () async {
+                    final date = await showDatePicker(
+                      context: context,
+                      initialDate: _dateOfBirth ?? DateTime.now(),
+                      firstDate: DateTime(1900),
+                      lastDate: DateTime.now(),
+                    );
+                    
+                    if (date != null) {
+                      setState(() {
+                        _dateOfBirth = date;
+                      });
+                    }
+                  },
+                ),
+                
+                const SizedBox(height: 32),
+                
+                // Bio section
+                const _SectionHeader(title: 'About You'),
+                TextFormField(
+                  controller: _bioController,
+                  decoration: const InputDecoration(
+                    labelText: 'Bio',
+                    hintText: 'Tell us about yourself',
+                    alignLabelWithHint: true,
+                  ),
+                  maxLines: 4,
+                  validator: ProfileValidators.validateBio,
+                ),
+                
+                const SizedBox(height: 32),
+                
+                // Submit button
+                Center(
+                  child: ElevatedButton(
+                    onPressed: _submitForm,
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size(200, 50),
+                    ),
+                    child: const Text('Save Changes'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+  
+  /// Validate and submit the form
+  void _submitForm() {
+    if (_formKey.currentState?.validate() ?? false) {
+      // Update profile fields
+      context.read<UserProfileBloc>().add(UserProfileFieldsUpdated(
+        name: _nameController.text,
+        email: _emailController.text,
+        phoneNumber: _phoneController.text,
+        gender: _selectedGender,
+        age: _age,
+        dateOfBirth: _dateOfBirth,
+        bio: _bioController.text,
+      ));
+    }
+  }
+}
+
+// Path: lib/modules/user_profile/injection/user_profile_dependencies.dart
+
+// Author: Dycoh Gacheri (https://github.com/Dycoh)
+// Description: Dependency injection for the user profile module. Sets up and provides
+// all required dependencies for the module to function properly.
+
+// Last Modified: Tuesday, 25 February 2025 16:35
+
+// Core/Framework imports
+import 'package:get_it/get_it.dart';
+import 'package:http/http.dart' as http;
+
+// Project imports - Services and Repositories
+import '../data/local/secure_storage_service.dart';
+import '../data/local/user_local_data_source.dart';
+import '../data/remote/user_remote_data_source.dart';
+import '../repository/user_repository.dart';
+import '../bloc/user_profile_bloc.dart';
+
+/// Authentication token provider function type
+typedef AuthTokenProvider = Future<String?> Function();
+
+/// Registers all dependencies for the user profile module
+class UserProfileDependencies {
+  final GetIt _getIt;
+  
+  const UserProfileDependencies(this._getIt);
+  
+  /// Register all dependencies
+  void register({
+    required AuthTokenProvider getAuthToken,
+  }) {
+    // Services
+    _getIt.registerLazySingleton<SecureStorageService>(
+      () => SecureStorageService(),
+    );
+    
+    // Local data source
+    _getIt.registerLazySingleton<UserLocalDataSource>(
+      () => UserLocalDataSource(
+        secureStorage: _getIt<SecureStorageService>(),
+      ),
+    );
+    
+    // Remote data source with HTTP client
+    _getIt.registerLazySingleton<http.Client>(() => http.Client());
+    _getIt.registerLazySingleton<UserRemoteDataSource>(
+      () => UserRemoteDataSource(
+        client: _getIt<http.Client>(),
+        getAuthToken: getAuthToken,
+      ),
+    );
+    
+    // Repository
+    _getIt.registerLazySingleton<UserRepository>(
+      () => UserRepository(
+        localDataSource: _getIt<UserLocalDataSource>(),
+        remoteDataSource: _getIt<UserRemoteDataSource>(),
+      ),
+    );
+    
+    // BLoC
+    _getIt.registerFactory<UserProfileBloc>(
+      () => UserProfileBloc(
+        userRepository: _getIt<UserRepository>(),
+      ),
+    );
+  }
+  
+  /// Unregister all dependencies
+  void unregister() {
+    _getIt.unregister<UserProfileBloc>();
+    _getIt.unregister<UserRepository>();
+    _getIt.unregister<UserRemoteDataSource>();
+    _getIt.unregister<http.Client>();
+    _getIt.unregister<UserLocalDataSource>();
+    _getIt.unregister<SecureStorageService>();
+  }
+}

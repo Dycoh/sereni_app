@@ -260,7 +260,9 @@ class OnboardingPageView extends StatelessWidget {
       }
     } else {
       // Trigger validation error
+      // ignore: unused_local_variable
       String errorMessage;
+      // ignore: unused_local_variable
       String? fieldName;
       
       switch (currentIndex) {
