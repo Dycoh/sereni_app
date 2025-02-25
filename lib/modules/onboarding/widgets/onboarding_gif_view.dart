@@ -32,53 +32,22 @@ class OnboardingGifView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        // Using light green container for background instead of yellow
-        color: AppTheme.kLightGreenContainer,
+        // Using app background color
+        color: AppTheme.kBackgroundColor,
         borderRadius: BorderRadius.circular(AppTheme.kRadiusLarge),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.kGray300.withOpacity(0.3),
-            blurRadius: 15,
-            spreadRadius: 2,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        // Removed shadow
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(AppTheme.kRadiusLarge),
-        child: Stack(
-          children: [
-            // Page view with GIFs
-            PageView.builder(
-              controller: pageController,
-              physics: const NeverScrollableScrollPhysics(), // Don't allow manual swiping
-              itemCount: gifPaths.length,
-              itemBuilder: (context, index) {
-                return _buildGifContainer(gifPaths[index]);
-              },
-            ),
-           
-            // Decorative elements
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: Container(
-                height: 10,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      AppTheme.kPrimaryGreen.withOpacity(0.2),
-                      AppTheme.kPrimaryGreen.withOpacity(0.0),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
+        child: PageView.builder(
+          controller: pageController,
+          physics: const NeverScrollableScrollPhysics(), // Don't allow manual swiping
+          itemCount: gifPaths.length,
+          itemBuilder: (context, index) {
+            return _buildGifContainer(gifPaths[index]);
+          },
         ),
+        // Removed the Stack and the Positioned green strip
       ),
     );
   }
@@ -87,8 +56,8 @@ class OnboardingGifView extends StatelessWidget {
   Widget _buildGifContainer(String gifPath) {
     return Container(
       decoration: BoxDecoration(
-        // Using light green container for background instead of yellow
-        color: AppTheme.kLightGreenContainer,
+        // Using app background color
+        color: AppTheme.kBackgroundColor,
       ),
       child: Center(
         child: Image.asset(

@@ -25,6 +25,7 @@ class OnboardingPageView extends StatelessWidget {
   // Controllers and callbacks
   final PageController pageController;
   final VoidCallback onSubmit;
+  final int currentPage;
   
   // Page titles and subtitles
   static const List<Map<String, String>> _pageContent = [
@@ -49,6 +50,7 @@ class OnboardingPageView extends StatelessWidget {
     super.key,
     required this.pageController,
     required this.onSubmit,
+    required this.currentPage,
   });
 
   @override
@@ -107,7 +109,14 @@ class OnboardingPageView extends StatelessWidget {
               
               // Navigation button
               _buildNavigationButton(context, index),
-              SizedBox(height: AppTheme.kSpacing6x),
+              SizedBox(height: AppTheme.kSpacing3x),
+              
+              // Progress indicator - moved to below the button
+              Align(
+                alignment: Alignment.centerLeft,
+                child: _buildProgressIndicator(context),
+              ),
+              SizedBox(height: AppTheme.kSpacing3x),
             ],
           ),
         );
@@ -188,6 +197,48 @@ class OnboardingPageView extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+  
+  /// Progress indicator showing current page in the onboarding flow
+  Widget _buildProgressIndicator(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: AppTheme.kSpacing * 1.5, // Increased horizontal padding
+        vertical: AppTheme.kSpacing / 2,
+      ),
+      decoration: BoxDecoration(
+        color: AppTheme.kWhite.withOpacity(0.8),
+        borderRadius: BorderRadius.circular(12),
+        // Adding slight shadow for better visibility against varying backgrounds
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min, // Ensure it takes only the space it needs
+        mainAxisAlignment: MainAxisAlignment.center, // Center the indicators
+        children: List.generate(
+          3, // Number of pages
+          (index) {
+            return Container(
+              width: 24,
+              height: 8,
+              margin: EdgeInsets.only(left: index > 0 ? AppTheme.kSpacing : 0),
+              decoration: BoxDecoration(
+                color: index <= currentPage
+                    ? AppTheme.kPrimaryGreen
+                    : AppTheme.kGray200,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            );
+          },
+        ),
+      ),
     );
   }
 

@@ -1,5 +1,11 @@
 // Path: lib/modules/onboarding/widgets/onboarding_input_widgets.dart
 
+// Author: Dycoh Gacheri (https://github.com/Dycoh)
+// Description: Custom input widgets for the onboarding flow that collect user information
+// including name, gender, and age with responsive layouts and animated feedback.
+
+// Last Modified: Tuesday, 25 February 2025 16:35
+
 // Core/Framework imports
 import 'package:flutter/material.dart';
 
@@ -271,6 +277,11 @@ class _GenderButton extends StatelessWidget {
 
 /// Age selector with slider and numeric display
 class AgeSelector extends StatelessWidget {
+  // Configuration constants
+  static const double _minAge = 13.0;
+  static const double _maxAge = 100.0;
+  static const int _ageDivisions = 87; // (_maxAge - _minAge)
+
   final double selectedAge;
   final ValueChanged<double> onAgeChanged;
 
@@ -285,9 +296,9 @@ class AgeSelector extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Age display with card background
+        // Age display with card background - REDUCED SIZE
         Container(
-          padding: EdgeInsets.all(AppTheme.kSpacing2x),
+          padding: EdgeInsets.all(AppTheme.kSpacing), // Reduced padding
           decoration: BoxDecoration(
             color: AppTheme.kWhite,
             borderRadius: BorderRadius.circular(16),
@@ -300,13 +311,14 @@ class AgeSelector extends StatelessWidget {
             ],
           ),
           child: Row(
+            mainAxisSize: MainAxisSize.min, // Make container only as wide as needed
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
                 selectedAge.toInt().toString(),
                 style: TextStyle(
                   color: AppTheme.kPrimaryGreen,
-                  fontSize: 48,
+                  fontSize: 36, // Reduced from 48
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -315,13 +327,13 @@ class AgeSelector extends StatelessWidget {
                 'years',
                 style: TextStyle(
                   color: AppTheme.kTextBrown,
-                  fontSize: 16,
+                  fontSize: 14, // Reduced from 16
                 ),
               ),
             ],
           ),
         ),
-        SizedBox(height: AppTheme.kSpacing3x),
+        SizedBox(height: AppTheme.kSpacing2x), // Reduced vertical spacing
         
         // Age slider with custom theme
         SliderTheme(
@@ -330,17 +342,17 @@ class AgeSelector extends StatelessWidget {
             inactiveTrackColor: AppTheme.kGray100,
             thumbColor: AppTheme.kWhite,
             thumbShape: RoundSliderThumbShape(
-              enabledThumbRadius: 15,
+              enabledThumbRadius: 12, // Slightly smaller thumb
               elevation: 4,
             ),
             overlayColor: AppTheme.kPrimaryGreen.withOpacity(0.2),
-            trackHeight: 8,
+            trackHeight: 6, // Slightly thinner track
           ),
           child: Slider(
             value: selectedAge,
-            min: 13.0, // Minimum age
-            max: 100.0, // Maximum age
-            divisions: 87, // (max - min)
+            min: _minAge,
+            max: _maxAge,
+            divisions: _ageDivisions,
             onChanged: onAgeChanged,
           ),
         ),
@@ -361,10 +373,10 @@ class AgeSelector extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  '13',
+                  _minAge.toInt().toString(),
                   style: TextStyle(
                     color: AppTheme.kGray600,
-                    fontSize: 14,
+                    fontSize: 12, // Reduced from 14
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -379,10 +391,10 @@ class AgeSelector extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  '100',
+                  _maxAge.toInt().toString(),
                   style: TextStyle(
                     color: AppTheme.kGray600,
-                    fontSize: 14,
+                    fontSize: 12, // Reduced from 14
                     fontWeight: FontWeight.bold,
                   ),
                 ),

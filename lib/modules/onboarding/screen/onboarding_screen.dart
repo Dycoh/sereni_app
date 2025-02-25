@@ -1,4 +1,5 @@
 // Path: lib/modules/onboarding/screens/onboarding_screen.dart
+
 // Author: Dycoh Gacheri (https://github.com/Dycoh)
 // Description: Onboarding screen that guides users through the initial setup process
 // with animated GIFs and a multi-page form flow for collecting user information.
@@ -19,7 +20,7 @@ import '../widgets/onboarding_gif_view.dart';
 import '../../../app/scaffold.dart';
 import '../../../app/theme.dart';
 import '../../../app/routes.dart';
-import '../../../shared/layout/app_layout.dart'; // Added import for LayoutType
+import '../../../shared/layout/app_layout.dart';
 
 /// Main onboarding screen that orchestrates the flow and provides BLoC provider
 class OnboardingScreen extends StatelessWidget {
@@ -109,18 +110,44 @@ class _OnboardingViewState extends State<_OnboardingView> {
           );
         }
         
+        // Create app bar with back button when not on first page
+        final PreferredSizeWidget? appBar = state.currentPage > 0 
+            ? AppBar(
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                leading: IconButton(
+                  icon: Container(
+                    decoration: BoxDecoration(
+                      color: AppTheme.kWhite.withOpacity(0.8),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    padding: const EdgeInsets.all(4),
+                    child: const Icon(Icons.arrow_back),
+                  ),
+                  onPressed: () {
+                    // Navigate to previous page
+                    _contentPageController.previousPage(
+                      duration: const Duration(milliseconds: 150),
+                      curve: Curves.easeInOut,
+                    );
+                  },
+                ),
+              )
+            : null;
+        
         return AppScaffold(
           currentRoute: 'onboarding',
           showNavigation: false, // Hide navigation during onboarding
           floatingActionButton: null, // Explicitly set to null to prevent layout issues
           layoutType: LayoutType.contentOnly, // Explicitly use contentOnly layout type
           useBackgroundDecorator: true, // Enable background decoration for consistent styling
-          contentWidthFraction: 0.9, // Use more screen space for onboarding
+          contentWidthFraction: 0.95, // Increased from 0.9 to use more screen space and reduce scrolling
           contentPadding: EdgeInsets.symmetric(
-            horizontal: AppTheme.kSpacing4x,
-            vertical: AppTheme.kSpacing2x,
+            horizontal: AppTheme.kSpacing3x, // Reduced from 4x to 3x
+            vertical: AppTheme.kSpacing, // Reduced from 2x to 1x to minimize vertical space usage
           ),
-          body: _buildResponsiveLayout(context),
+          appBar: appBar, // Add the dynamic app bar
+          body: _buildResponsiveLayout(context, state.currentPage),
         );
       },
     );
@@ -128,23 +155,23 @@ class _OnboardingViewState extends State<_OnboardingView> {
   
   /// Main responsive layout builder function that switches between wide and narrow layouts
   /// based on the available screen width
-  Widget _buildResponsiveLayout(BuildContext context) {
+  Widget _buildResponsiveLayout(BuildContext context, int currentPage) {
     // Use a LayoutBuilder to determine the available screen space
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWideScreen = constraints.maxWidth > 800;
         
         if (isWideScreen) {
-          return _buildWideLayout(constraints);
+          return _buildWideLayout(constraints, currentPage);
         } else {
-          return _buildNarrowLayout(constraints);
+          return _buildNarrowLayout(constraints, currentPage);
         }
       },
     );
   }
   
   /// Layout for wider screens (tablets, desktops) with side-by-side content
-  Widget _buildWideLayout(BoxConstraints constraints) {
+  Widget _buildWideLayout(BoxConstraints constraints, int currentPage) {
     // Ensure we have finite constraints by using explicit sizing
     final screenSize = MediaQuery.of(context).size;
     
@@ -155,7 +182,7 @@ class _OnboardingViewState extends State<_OnboardingView> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // GIF section (left side)
+          // GIF section (left side) without progress indicator
           Expanded(
             flex: 6,
             child: Center(
@@ -179,14 +206,14 @@ class _OnboardingViewState extends State<_OnboardingView> {
             flex: 6,
             child: Padding(
               padding: EdgeInsets.symmetric(
-                horizontal: AppTheme.kSpacing6x,
-                vertical: AppTheme.kSpacing2x,
+                horizontal: AppTheme.kSpacing4x, // Reduced from 6x to 4x
+                vertical: AppTheme.kSpacing, // Reduced from 2x to 1x
               ),
               child: Center(
                 child: SizedBox(
-                  height: screenSize.height * 0.6, // Fixed percentage of screen height
-                  width: constraints.maxWidth * 0.4,
-                  child: _buildContentSection(),
+                  height: screenSize.height * 0.65, // Increased from 0.6 to 0.65 for more content space
+                  width: constraints.maxWidth * 0.45, // Increased from 0.4 to 0.45 for more content space
+                  child: _buildContentSection(currentPage),
                 ),
               ),
             ),
@@ -198,22 +225,22 @@ class _OnboardingViewState extends State<_OnboardingView> {
   
   /// Layout for narrower screens (phones) with vertically stacked content
   /// Fixed to prevent infinite height constraints in SingleChildScrollView
-  Widget _buildNarrowLayout(BoxConstraints constraints) {
+  Widget _buildNarrowLayout(BoxConstraints constraints, int currentPage) {
     // Calculate fixed heights based on device screen size instead of unbounded constraints
     // This prevents the "BoxConstraints forces an infinite height" error
-    final double gifHeight = MediaQuery.of(context).size.height * 0.3;
-    final double contentHeight = MediaQuery.of(context).size.height * 0.5;
+    final double gifHeight = MediaQuery.of(context).size.height * 0.28; // Reduced from 0.3 to 0.28
+    final double contentHeight = MediaQuery.of(context).size.height * 0.55; // Increased from 0.5 to 0.55
     
     return SingleChildScrollView(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          SizedBox(height: AppTheme.kSpacing2x),
+          SizedBox(height: AppTheme.kSpacing), // Reduced from 2x to 1x
           
-          // GIF section (top) - now with fixed height
+          // GIF section (top) without progress indicator
           SizedBox(
             height: gifHeight,
-            width: constraints.maxWidth * 0.9,
+            width: constraints.maxWidth * 0.95, // Increased from 0.9 to 0.95
             child: OnboardingGifView(
               pageController: _gifPageController,
               gifPaths: [
@@ -224,93 +251,30 @@ class _OnboardingViewState extends State<_OnboardingView> {
             ),
           ),
           
-          SizedBox(height: AppTheme.kSpacing2x),
+          SizedBox(height: AppTheme.kSpacing), // Reduced from 2x to 1x
           
-          // Content section (bottom) - now with fixed height
+          // Content section (bottom)
           SizedBox(
             height: contentHeight,
-            width: constraints.maxWidth * 0.9,
-            child: _buildContentSection(),
+            width: constraints.maxWidth * 0.95, // Increased from 0.9 to 0.95
+            child: _buildContentSection(currentPage),
           ),
           
-          // Add some bottom padding for better spacing
-          SizedBox(height: AppTheme.kSpacing4x),
+          // Reduced bottom padding
+          SizedBox(height: AppTheme.kSpacing2x), // Reduced from 4x to 2x
         ],
       ),
     );
   }
   
-  /// Content section containing the page view and back button
-  Widget _buildContentSection() {
-    return BlocBuilder<OnboardingBloc, OnboardingState>(
-      builder: (context, state) {
-        return Stack(
-          children: [
-            // Onboarding content pages
-            Positioned.fill(
-              child: OnboardingPageView(
-                pageController: _contentPageController,
-                onSubmit: () {
-                  context.read<OnboardingBloc>().add(OnboardingSubmitted());
-                },
-              ),
-            ),
-            
-            // Back button (only shown when not on first page)
-            if (state.currentPage > 0)
-              Positioned(
-                top: AppTheme.kSpacing2x,
-                left: 16,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: AppTheme.kWhite.withOpacity(0.8),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: IconButton(
-                    icon: const Icon(Icons.arrow_back),
-                    onPressed: () {
-                      // Navigate to previous page
-                      _contentPageController.previousPage(
-                        duration: const Duration(milliseconds: 150),
-                        curve: Curves.easeInOut,
-                      );
-                    },
-                  ),
-                ),
-              ),
-            
-            // Progress indicator at bottom
-            Positioned(
-              bottom: AppTheme.kSpacing,
-              left: 0,
-              child: _buildProgressIndicator(state.currentPage),
-            ),
-          ],
-        );
+  /// Content section containing the page view with progress indicator
+  Widget _buildContentSection(int currentPage) {
+    return OnboardingPageView(
+      pageController: _contentPageController,
+      currentPage: currentPage,
+      onSubmit: () {
+        context.read<OnboardingBloc>().add(OnboardingSubmitted());
       },
-    );
-  }
-  
-  /// Progress indicator showing current page in the onboarding flow
-  Widget _buildProgressIndicator(int currentPage) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.start,
-      children: List.generate(
-        3, // Number of pages
-        (index) {
-          return Container(
-            width: 24,
-            height: 8,
-            margin: EdgeInsets.only(left: index > 0 ? AppTheme.kSpacing : 0),
-            decoration: BoxDecoration(
-              color: index <= currentPage
-                  ? AppTheme.kPrimaryGreen
-                  : AppTheme.kGray200,
-              borderRadius: BorderRadius.circular(4),
-            ),
-          );
-        },
-      ),
     );
   }
   
