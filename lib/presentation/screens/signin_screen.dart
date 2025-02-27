@@ -1,11 +1,32 @@
-// signin_screen.dart
+// Path: lib/presentation/screens/signin_screen.dart
 
+// Author: Dycoh Gacheri (https://github.com/Dycoh)
+// Description: Sign-in screen that provides user authentication functionality with 
+// Firebase, responsive layouts, and standardized navigation back to welcome screen.
+
+// Last Modified: Thursday, 27 February 2025 16:35
+
+// Core/Framework imports
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
+// External package imports
+import 'package:shared_preferences/shared_preferences.dart';
+
+// Project imports - Services & Utils
 import '../../app/theme.dart';
+
+// Project imports - Screens
 import 'home_screen.dart';
 import 'signup_screen.dart';
+
+// Project imports - Widgets
 import '../widgets/background_decorator_widget.dart';
+
+// Project imports - Route Management
+import '../../app/routes.dart';
+
+// Import for route management
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -15,8 +36,11 @@ class SignInScreen extends StatefulWidget {
 }
 
 class _SignInScreenState extends State<SignInScreen> {
+  // Form controllers
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  
+  // UI state variables
   bool _isSigningIn = false;
   bool _showPassword = false;
   String? _emailError;
@@ -80,15 +104,12 @@ class _SignInScreenState extends State<SignInScreen> {
 
       try {
         // Attempt to sign in with Firebase
-
-      
         // ignore: unused_local_variable
         final userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
           email: _emailController.text.trim(),
           password: _passwordController.text,
         );
       
-
         if (!mounted) return;
         
         // If successful, show success dialog and navigate
@@ -173,9 +194,8 @@ class _SignInScreenState extends State<SignInScreen> {
                 ElevatedButton(
                   onPressed: () {
                     Navigator.of(context).pop(); // Close dialog
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (context) => const HomeScreen()),
-                    );
+                    // Use RouteManager to navigate to home screen
+                    Navigator.of(context).pushReplacementNamed(RouteManager.home);
                   },
                   child: const Text('Continue'),
                 ),
@@ -283,9 +303,8 @@ class _SignInScreenState extends State<SignInScreen> {
                       ElevatedButton(
                         onPressed: () {
                           Navigator.of(context).pop();
-                          Navigator.of(context).pushReplacement(
-                            MaterialPageRoute(builder: (context) => const SignUpScreen()),
-                          );
+                          // Use RouteManager to navigate to sign up screen
+                          Navigator.of(context).pushReplacementNamed(RouteManager.signUp);
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.kPrimaryGreen,
@@ -321,7 +340,8 @@ class _SignInScreenState extends State<SignInScreen> {
             children: [
               IconButton(
                 icon: const Icon(Icons.arrow_back, color: AppTheme.kTextBrown),
-                onPressed: () => Navigator.of(context).pop(),
+                // Updated navigation: Use RouteManager to navigate to welcome screen
+                onPressed: () => Navigator.of(context).pushReplacementNamed(RouteManager.welcome),
               ),
               const Spacer(),
               Padding(
@@ -625,9 +645,8 @@ class _SignInScreenState extends State<SignInScreen> {
               ),
               InkWell(
                 onTap: () {
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (context) => const SignUpScreen()),
-                  );
+                  // Use RouteManager to navigate to sign up screen
+                  Navigator.of(context).pushReplacementNamed(RouteManager.signUp);
                 },
                 child: Text(
                   'Sign Up',

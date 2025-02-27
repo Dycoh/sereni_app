@@ -6,7 +6,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter/foundation.dart';
 
 class AIService {
-  static const String _modelName = 'gemini-pro';
+  static const String _modelName = 'gemini-1.5-flash'; // Updated to the latest free-tier model
   static const int _maxRetries = 2;  // Reduced retries for rate limiting
   
   late final GenerativeModel _model;
