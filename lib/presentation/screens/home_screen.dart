@@ -1,16 +1,33 @@
+// Path: lib/presentation/screens/home_screen.dart
+
+// Author: Dycoh Gacheri (https://github.com/Dycoh)
+// Description: Home screen that displays user overview, mood tracking, 
+// journal streaks, and AI insights. Uses the app's standardized layout system for consistency.
+
+// Last Modified: Monday, 10 March 2025 16:35
+
+// Core/Framework imports
 import 'package:flutter/material.dart';
-import 'package:sereni_app/presentation/screens/chat_screen.dart';
-import 'package:sereni_app/presentation/screens/insights_screen.dart';
-import 'package:sereni_app/presentation/screens/journal_screen.dart';
-import 'package:sereni_app/presentation/screens/profile_screen.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
+
+// Project imports - Layout
+import '../../shared/layout/app_layout.dart';
+import '../../app/scaffold.dart';
+
+// Project imports - Theme
 import '../../app/theme.dart';
-import 'package:google_nav_bar/google_nav_bar.dart';
+import '../../app/routes.dart';
+
+// Project imports - Screens
+import 'package:sereni_app/presentation/screens/chat_screen.dart';
+import 'package:sereni_app/presentation/screens/journal_screen.dart';
+
+// Project imports - Widgets
 import '../widgets/psych_score_chart.dart';
 import '../widgets/mood_selector.dart';
 import '../widgets/journal_streak_chart.dart';
 import '../widgets/insights_carousel.dart';
-import '../widgets/navigation_widget.dart';
-import '../../app/routes.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -20,6 +37,11 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
+  // Asset paths
+  static const String _profileImagePlaceholder = 'assets/images/placeholder_profile.png';
+  static const String _sereniLogoPath = 'assets/logos/sereni_logo.png';
+  
+  // Animation controllers
   late AnimationController _colorController;
   late Animation<Color?> _colorTween1;
   late Animation<Color?> _colorTween2;
@@ -27,14 +49,22 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   late AnimationController _fillController;
   late Animation<double> _fillAnimation;
   
-  // Typing animation text
+  // Typing animation
   late AnimationController _typeController;
   late Animation<int> _typeAnimation;
   final String _subtitle = "Your daily dose of AI-powered mental wellness insights";
+  
+  // Profile image
+  File? _profileImage;
 
   @override
   void initState() {
     super.initState();
+    _setupAnimations();
+  }
+
+  void _setupAnimations() {
+    // Color animation for gradient effects
     _colorController = AnimationController(
       duration: const Duration(seconds: 3),
       vsync: this,
@@ -70,6 +100,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       ),
     );
 
+    // Fill animation for hover effects
     _fillController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
@@ -80,6 +111,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       end: 1.0,
     ).animate(_fillController);
 
+    // Typing animation for subtitle
     _typeController = AnimationController(
       duration: Duration(milliseconds: _subtitle.length * 100),
       vsync: this,
@@ -101,12 +133,32 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
-    final horizontalPadding = screenWidth < 600 ? 0.05 : 0.1;
-    final isSmallScreen = screenWidth < 600;
+    return AppScaffold(
+      currentRoute: RouteManager.home,
+      backgroundColor: AppTheme.kBackgroundColor,
+      title: null,
+      layoutType: LayoutType.contentOnly,
+      // Use the standard layout system's contentWidthFraction instead of manual padding
+      contentPadding: const EdgeInsets.all(AppTheme.kSpacing2x),
+      body: Stack(
+        children: [
+          _buildHomeContent(),
+          // Position AI button at fixed position from bottom
+          Positioned(
+            bottom: MediaQuery.of(context).size.height * 0.05, // 5% from bottom
+            left: 0,
+            right: 0,
+            child: _buildAIFab(context),
+          ),
+        ],
+      ),
+      // Remove the default FAB since we're using a custom positioned one
+      floatingActionButton: null,
+    );
+  }
 
-    // Placeholder data for widgets
+  Widget _buildHomeContent() {
+    // Placeholder data for insights widget
     final insights = [
       const InsightCard(
         title: 'Mood Analysis',
@@ -125,187 +177,240 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       ),
     ];
 
-    return CustomScaffold(
-      currentRoute: RouteManager.home,
-      backgroundColor: AppTheme.kBackgroundColor,
-      title: null,
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.menu),
-          onPressed: () {
-            // Handle menu action
-          },
-        ),
-      ],
-      body: Stack(
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SingleChildScrollView(
-            child: Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: MediaQuery.of(context).size.width * horizontalPadding,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: AppTheme.kSpacing3x),
-                  // Greeting Section
-                  Row(
-                    children: [
-                      Container(
-                        width: 64,
-                        height: 64,
-                        decoration: BoxDecoration(
-                          color: AppTheme.kGray300,
-                          shape: BoxShape.circle,
-                          image: const DecorationImage(
-                            image: AssetImage('assets/images/placeholder_profile.png'),
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: AppTheme.kSpacing2x),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _getGreeting(),
-                            style: Theme.of(context).textTheme.bodyLarge,
-                          ),
-                          Text(
-                            'Sarah Mitchell', // Placeholder name
-                            style: Theme.of(context).textTheme.displayMedium,
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppTheme.kSpacing3x),
-                  
-                  // Main Content Grid
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Left Column - PsychScore
-                      const Expanded(
-                        flex: 1,
-                        child: SizedBox(
-                          height: 224,
-                          child: PsychScoreChart(score: 85),
-                        ),
-                      ),
-                      const SizedBox(width: AppTheme.kSpacing2x),
-                      // Right Column - Mood and Journal with Golden Ratio
-                      Expanded(
-                        flex: 1,
-                        child: Column(
-                          children: [
-                            // Mood Container (smaller)
-                            const SizedBox(
-                              height: 64,
-                              child: MoodSelector(),
-                            ),
-                            const SizedBox(height: AppTheme.kSpacing2x),
-                            // Journal Streak Container (larger)
-                            const SizedBox(
-                              height: 144,
-                              child: JournalStreakChart(),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppTheme.kSpacing3x),
-                  
-                  // AI Insights Header
-                  Text(
-                    'AI Insights ✨',
-                    style: Theme.of(context).textTheme.displayLarge,
-                  ),
-                  const SizedBox(height: AppTheme.kSpacing),
-                  // Animated subtitle
-                  AnimatedBuilder(
-                    animation: _typeAnimation,
-                    builder: (context, child) {
-                      return Text(
-                        _subtitle.substring(0, _typeAnimation.value),
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              color: AppTheme.kGray600,
-                            ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: AppTheme.kSpacing2x),
-                  
-                  // AI Insights Section
-                  SizedBox(
-                    height: 200,
-                    child: InsightsCarousel(
-                      insights: insights,
-                      autoPlay: true,
-                      animationDuration: const Duration(milliseconds: 500),
+          const SizedBox(height: AppTheme.kSpacing3x),
+          // Greeting Section
+          _buildGreetingSection(),
+          const SizedBox(height: AppTheme.kSpacing3x),
+          
+          // Main Content Grid
+          _buildMainContentGrid(),
+          const SizedBox(height: AppTheme.kSpacing3x),
+          
+          // AI Insights Header
+          Text(
+            'AI Insights ✨',
+            style: Theme.of(context).textTheme.displayLarge,
+          ),
+          const SizedBox(height: AppTheme.kSpacing),
+          
+          // Animated subtitle
+          AnimatedBuilder(
+            animation: _typeAnimation,
+            builder: (context, child) {
+              return Text(
+                _subtitle.substring(0, _typeAnimation.value),
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: AppTheme.kGray600,
                     ),
-                  ),
-                  // Add extra padding at bottom for FAB
-                  SizedBox(height: isSmallScreen ? 100 : 80),
-                ],
-              ),
+              );
+            },
+          ),
+          const SizedBox(height: AppTheme.kSpacing2x),
+          
+          // AI Insights Section - Make height adaptive
+          SizedBox(
+            height: 200,
+            child: InsightsCarousel(
+              insights: insights,
+              autoPlay: true,
+              animationDuration: const Duration(milliseconds: 500),
             ),
           ),
-          // Positioned FAB
-          Positioned(
-            bottom: isSmallScreen 
-                ? screenHeight * 0.02  // 2% from bottom for small screens
-                : screenHeight * 0.05, // 5% from bottom for larger screens
-            left: 0,
-            right: 0,
-            child: Center(
-              child: MouseRegion(
-                onEnter: (_) => _fillController.forward(),
-                onExit: (_) => _fillController.reverse(),
-                child: AnimatedBuilder(
-                  animation: Listenable.merge([_colorTween1, _colorTween2, _colorTween3, _fillAnimation]),
-                  builder: (context, child) {
-                    return Container(
-                      height: 60,
-                      width: 60,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        gradient: LinearGradient(
-                          colors: [
-                            _colorTween1.value ?? Colors.purple,
-                            _colorTween2.value ?? Colors.blue,
-                            _colorTween3.value ?? Colors.green,
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
+          // Add extra padding at bottom to account for fixed FAB position
+          SizedBox(height: MediaQuery.of(context).size.height * 0.15),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGreetingSection() {
+    return Row(
+      children: [
+        GestureDetector(
+          onTap: _selectProfileImage,
+          child: Stack(
+            children: [
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: AppTheme.kGray300,
+                  shape: BoxShape.circle,
+                  image: _profileImage != null
+                    ? DecorationImage(
+                        image: FileImage(_profileImage!),
+                        fit: BoxFit.cover,
+                      )
+                    : const DecorationImage(
+                        image: AssetImage(_profileImagePlaceholder),
+                        fit: BoxFit.cover,
                       ),
-                      child: FloatingActionButton(
-                        onPressed: () {
-                          _showActionDialog(context);
-                        },
-                        backgroundColor: Colors.transparent,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: const Text(
-                          'AI',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 24,
-                          ),
-                        ),
-                      ),
-                    );
-                  },
                 ),
               ),
+              Positioned(
+                right: 0,
+                bottom: 0,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: AppTheme.kAccentBrown,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.camera_alt,
+                    size: 14,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: AppTheme.kSpacing2x),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _getGreeting(),
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+              Text(
+                'Sconl', // Placeholder name
+                style: Theme.of(context).textTheme.displayMedium,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMainContentGrid() {
+    // Get screen width to make layout responsive
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 600;
+    
+    // Use Column for small screens, Row for larger screens
+    if (isSmallScreen) {
+      return Column(
+        children: [
+          // PsychScore (full width on small screens)
+          const SizedBox(
+            height: 224,
+            child: PsychScoreChart(score: 85),
+          ),
+          const SizedBox(height: AppTheme.kSpacing2x),
+          // Mood Selector
+          const SizedBox(
+            height: 64,
+            child: MoodSelector(),
+          ),
+          const SizedBox(height: AppTheme.kSpacing2x),
+          // Journal Streak Chart
+          const SizedBox(
+            height: 144,
+            child: JournalStreakChart(),
+          ),
+        ],
+      );
+    } else {
+      // Original Row layout for larger screens
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Left Column - PsychScore
+          const Expanded(
+            flex: 1,
+            child: SizedBox(
+              height: 224,
+              child: PsychScoreChart(score: 85),
+            ),
+          ),
+          const SizedBox(width: AppTheme.kSpacing2x),
+          // Right Column - Mood and Journal with Golden Ratio
+          Expanded(
+            flex: 1,
+            child: Column(
+              children: [
+                // Mood Container (smaller)
+                const SizedBox(
+                  height: 64,
+                  child: MoodSelector(),
+                ),
+                const SizedBox(height: AppTheme.kSpacing2x),
+                // Journal Streak Container (larger)
+                const SizedBox(
+                  height: 144,
+                  child: JournalStreakChart(),
+                ),
+              ],
             ),
           ),
         ],
+      );
+    }
+  }
+
+  Widget _buildAIFab(BuildContext context) {
+    final buttonSize = MediaQuery.of(context).size.width < 600 ? 50.0 : 60.0;
+    
+    return Center(
+      child: MouseRegion(
+        onEnter: (_) => _fillController.forward(),
+        onExit: (_) => _fillController.reverse(),
+        child: AnimatedBuilder(
+          animation: Listenable.merge([_colorTween1, _colorTween2, _colorTween3, _fillAnimation]),
+          builder: (context, child) {
+            return Container(
+              height: buttonSize,
+              width: buttonSize,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                gradient: LinearGradient(
+                  colors: [
+                    _colorTween1.value ?? Colors.purple,
+                    _colorTween2.value ?? Colors.blue,
+                    _colorTween3.value ?? Colors.green,
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                // Add shadow for better visibility
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    _showActionDialog(context);
+                  },
+                  borderRadius: BorderRadius.circular(16),
+                  child: Center(
+                    child: Text(
+                      'AI',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: buttonSize * 0.4,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -318,6 +423,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       return 'Good Afternoon';
     } else {
       return 'Good Evening';
+    }
+  }
+
+  Future<void> _selectProfileImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    
+    if (pickedFile != null) {
+      setState(() {
+        _profileImage = File(pickedFile.path);
+      });
     }
   }
 
@@ -343,7 +459,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             children: [
               // Sereni Logo
               Image.asset(
-                'assets/logos/sereni_logo.png',
+                _sereniLogoPath,
                 height: 48,
               ),
               const SizedBox(height: AppTheme.kSpacing3x),
