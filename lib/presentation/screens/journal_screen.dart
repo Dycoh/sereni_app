@@ -1,10 +1,28 @@
+// Path: lib/presentation/screens/journal_screen.dart
+
+// Author: Dycoh Gacheri (https://github.com/Dycoh)
+// Description: Journal screen that allows users to create and save journal entries 
+// with mood tracking and text formatting capabilities. Utilizes the AppScaffold 
+// for consistent layout and navigation.
+
+// Last Modified: Monday, 10 March 2025 16:35
+
+// Core/Framework imports
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'dart:ui' as ui;
+
+// Project imports - Theme
 import '../../app/theme.dart';
+
+// Project imports - Layout
+import '../../app/scaffold.dart';
+import '../../shared/layout/app_layout.dart';
+
+// Project imports - Navigation
 import '../widgets/navigation_widget.dart';
 import '../widgets/background_decorator_widget.dart';
 import '../../app/routes.dart';
-import 'dart:ui' as ui;
 
 class JournalScreen extends StatefulWidget {
   const JournalScreen({super.key});
@@ -14,15 +32,18 @@ class JournalScreen extends StatefulWidget {
 }
 
 class _JournalScreenState extends State<JournalScreen> {
+  // Text controllers
   final TextEditingController _journalController = TextEditingController();
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  
+  // State variables
   double _moodValue = 5.0;
   bool _isSubmitting = false;
   bool _isAutoAnalyzing = true;
   bool _isBold = false;
   bool _isItalic = false;
   bool _isUnderline = false;
-
+  
+  // Content constants
   final List<String> _moodEmojis = [
     '😢', '😔', '😕', '😐', '🙂', '😊', '😄', '🥳', '⭐', '✨',
   ];
@@ -61,141 +82,50 @@ class _JournalScreenState extends State<JournalScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isDesktop = screenWidth > 600;
-    final horizontalPadding = isDesktop ? screenWidth * 0.1 : screenWidth * 0.05;
-
-    return BackgroundDecorator(
-      child: Scaffold(
-        key: _scaffoldKey,
-        backgroundColor: Colors.transparent,
-        appBar: PreferredSize(
-          preferredSize: const Size.fromHeight(kToolbarHeight),
-          child: SafeArea(
-            child: Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: horizontalPadding,
-                vertical: 8,
-              ),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(
-                      Icons.menu,
-                      color: AppTheme.kTextBrown,
-                      size: 28,
-                    ),
-                    onPressed: () {
-                      _scaffoldKey.currentState?.openDrawer();
-                    },
-                  ),
-                  const SizedBox(width: 16),
-                  Image.asset(
-                    'assets/logos/sereni_logo.png',
-                    height: 32,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        drawer: Drawer(
-          child: ListView(
-            padding: EdgeInsets.zero,
-            children: [
-              DrawerHeader(
-                decoration: BoxDecoration(
-                  color: AppTheme.kPrimaryGreen.withOpacity(0.1),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Image.asset(
-                      'assets/logos/sereni_logo.png',
-                      height: 40,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Your Mindful Journey',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: AppTheme.kTextBrown,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              ListTile(
-                leading: const Icon(Icons.home, color: AppTheme.kPrimaryGreen),
-                title: const Text('Home'),
-                onTap: () => Navigator.pushReplacementNamed(context, RouteManager.home),
-              ),
-              ListTile(
-                leading: const Icon(Icons.edit_note, color: AppTheme.kPrimaryGreen),
-                title: const Text('Journal'),
-                selected: true,
-                selectedTileColor: AppTheme.kPrimaryGreen.withOpacity(0.1),
-                onTap: () => Navigator.pop(context),
-              ),
-              ListTile(
-                leading: const Icon(Icons.insights, color: AppTheme.kPrimaryGreen),
-                title: const Text('Insights'),
-                onTap: () => Navigator.pushReplacementNamed(context, RouteManager.insights),
-              ),
-              ListTile(
-                leading: const Icon(Icons.person_outline, color: AppTheme.kPrimaryGreen),
-                title: const Text('Profile'),
-                onTap: () => Navigator.pushReplacementNamed(context, RouteManager.profile),
-              ),
-              const Divider(),
-              ListTile(
-                leading: const Icon(Icons.logout, color: AppTheme.kAccentBrown),
-                title: const Text('Logout'),
-                onTap: () {
-                  // Implement logout logic
-                },
-              ),
-            ],
-          ),
-        ),
-        body: SafeArea(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: horizontalPadding,
-                vertical: AppTheme.kSpacing3x,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHeader(),
-                  const SizedBox(height: AppTheme.kSpacing3x),
-                  _buildMoodSelector(),
-                  const SizedBox(height: AppTheme.kSpacing4x),
-                  Text(
-                    "Time to reflect on your journey ✨",
-                    style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                      color: AppTheme.kTextBrown,
-                    ),
-                  ),
-                  const SizedBox(height: AppTheme.kSpacing),
-                  Text(
-                    DateFormat('EEEE, MMMM d, h:mm a').format(DateTime.now()),
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: AppTheme.kGray600,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                  const SizedBox(height: AppTheme.kSpacing2x),
-                  _buildJournalEditor(),
-                  const SizedBox(height: AppTheme.kSpacing3x),
-                  _buildSubmitButton(),
-                ],
-              ),
-            ),
-          ),
-        ),
+    // Use AppScaffold for consistent layout
+    return AppScaffold(
+      currentRoute: RouteManager.journal,
+      title: "Journal",
+      layoutType: LayoutType.contentOnly,
+      useBackgroundDecorator: true,
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: AppTheme.kSpacing3x,
       ),
+      contentWidthFraction: 0.9,
+      floatingActionButton: null,
+      showNavigation: true,
+      body: _buildJournalContent(),
+    );
+  }
+
+  Widget _buildJournalContent() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildHeader(),
+        const SizedBox(height: AppTheme.kSpacing3x),
+        _buildMoodSelector(),
+        const SizedBox(height: AppTheme.kSpacing4x),
+        Text(
+          "Time to reflect on your journey ✨",
+          style: Theme.of(context).textTheme.displayMedium?.copyWith(
+            color: AppTheme.kTextBrown,
+          ),
+        ),
+        const SizedBox(height: AppTheme.kSpacing),
+        Text(
+          DateFormat('EEEE, MMMM d, h:mm a').format(DateTime.now()),
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+            color: AppTheme.kGray600,
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+        const SizedBox(height: AppTheme.kSpacing2x),
+        _buildJournalEditor(),
+        const SizedBox(height: AppTheme.kSpacing3x),
+        _buildSubmitButton(),
+      ],
     );
   }
 
@@ -423,9 +353,7 @@ class _JournalScreenState extends State<JournalScreen> {
               ),
               onChanged: _isAutoAnalyzing ? _analyzeEntryMood : null,
             ),
-            
-            // continuation
-            ),
+          ),
           Padding(
             padding: const EdgeInsets.all(AppTheme.kSpacing2x),
             child: _buildWordCount(),
